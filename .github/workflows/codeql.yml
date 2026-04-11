@@ -1,0 +1,165 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CodeQL Advanced Security & Quality Analysis
+# Fractal Cosmopsychism Theory Repository
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Languages covered:
+#   • javascript-typescript  →  SYN13_simulation.jsx (Vite/React 6D ODE simulator)
+#                               fct-sim/ Vite scaffolding, all JSX components
+#   • python                 →  fct_phase_transition_viz.py (EEG/mTRF pipeline)
+#                               build_fct_repo.py, cosmic-ib-dashboard (Streamlit)
+#
+# NOTE on C/C++ (Granite engine):
+#   Granite is an external submodule (https://github.com/LiranOG/Granite).
+#   CodeQL C/C++ analysis requires the submodule to be fully cloned and built
+#   with CMake + CUDA. This is handled in the dedicated Granite repository CI.
+#   Adding it here without the submodule causes a fatal CodeQL finalization error.
+#
+# Query suites:
+#   • security-extended      →  OWASP Top-10, CWE, injection, XSS, SSRF coverage
+#   • security-and-quality   →  Code quality, dead code, maintainability lints
+#
+# Triggers:
+#   • Push / PR to main  (skips docs-only changes)
+#   • Weekly schedule    (every Friday 20:23 UTC — full baseline scan)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: "CodeQL Advanced"
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "LICENSE*"
+      - "LEGAL.md"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
+
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "LICENSE*"
+      - "LEGAL.md"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
+
+  schedule:
+    # Full weekly baseline scan — every Friday at 20:23 UTC
+    - cron: "23 20 * * 5"
+
+# Cancel duplicate runs on the same branch to save runner minutes
+concurrency:
+  group: "codeql-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: "Analyze (${{ matrix.language }})"
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write   # Upload SARIF to GitHub Security tab
+      packages: read            # Fetch CodeQL packs
+      actions: read             # Required for private repos
+      contents: read            # Read source code
+
+    strategy:
+      fail-fast: false          # Continue other languages if one fails
+      matrix:
+        include:
+
+          # ── JavaScript / TypeScript ────────────────────────────────────────
+          # SYN13_simulation.jsx  — React + Recharts interactive 6D ODE simulator
+          # fct-sim/              — Vite scaffold, JSX components
+          - language: javascript-typescript
+            build-mode: none
+
+          # ── Python ────────────────────────────────────────────────────────
+          # src/computational_models/python/fct_phase_transition_viz.py  (EEG/mTRF)
+          # scripts/build_fct_repo.py                                    (build tool)
+          # src/computational_models/cosmic-ib-dashboard/                (Streamlit)
+          - language: python
+            build-mode: none
+
+    steps:
+
+      # ── 1. Checkout ─────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history lets CodeQL compute blame/diff context
+          fetch-depth: 0
+
+      # ── 2. JS/TS setup ──────────────────────────────────────────────────────
+      - name: Set up Node.js 20 (JS/TS)
+        if: matrix.language == 'javascript-typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          # Note: no cache here — package-lock.json may not exist in every clone
+
+      - name: Install JS dependencies (fct-sim)
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          if [ -f "fct-sim/package.json" ]; then
+            echo "→ Installing fct-sim dependencies…"
+            cd fct-sim && npm install
+          else
+            echo "→ fct-sim not scaffolded yet — skipping npm install."
+            echo "  The JSX source files will still be scanned by CodeQL."
+          fi
+
+      # ── 3. Python setup ─────────────────────────────────────────────────────
+      - name: Set up Python 3.11 (Python)
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          # Note: no pip cache — no guaranteed requirements.txt in root
+
+      - name: Install Python dependencies
+        if: matrix.language == 'python'
+        run: |
+          python -m pip install --upgrade pip
+
+          # Core FCT runtime dependencies — resolves all imports for CodeQL
+          pip install \
+            numpy \
+            scipy \
+            matplotlib \
+            mne \
+            fooof \
+            streamlit \
+            pandas \
+            scikit-learn \
+            astropy
+
+          # Install any module-level requirements.txt files if they exist
+          for req_file in \
+            "src/computational_models/python/requirements.txt" \
+            "src/computational_models/cosmic-ib-dashboard/requirements.txt" \
+            "scripts/requirements.txt"; do
+            if [ -f "$req_file" ]; then
+              echo "→ Installing from $req_file"
+              pip install -r "$req_file"
+            fi
+          done
+
+      # ── 4. Initialize CodeQL ────────────────────────────────────────────────
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # Apply full security + quality coverage
+          queries: security-extended,security-and-quality
+
+      # ── 5. Perform CodeQL Analysis ──────────────────────────────────────────
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"

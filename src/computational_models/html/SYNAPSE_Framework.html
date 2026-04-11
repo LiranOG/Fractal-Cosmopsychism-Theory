@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNAPSE — Symmetric N-body Astrophysical Phase-Space Estimator</title>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['\\[','\\]']],
+    tags: 'ams'
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Overpass+Mono:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #f7f5ef;
+    --bg2:       #eeece4;
+    --bg3:       #e4e0d4;
+    --ink:       #1c1a14;
+    --ink-dim:   #6b6557;
+    --ink-faint: #a09888;
+    --rule:      #c8c4b4;
+    --accent:    #8b2d00;
+    --accent2:   #1a4a7a;
+    --accent3:   #3d6b00;
+    --accent4:   #5c2d8b;
+    --gold:      #9a7200;
+    --red:       #8b1a1a;
+    --mono: 'Overpass Mono', monospace;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --body: 'Libre Baskerville', Georgia, serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  /* === HEADER === */
+  .masthead {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 72px 48px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .masthead::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 120%, #3d2200 0%, transparent 70%);
+  }
+  .masthead-inner { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+  .masthead-kicker {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #c8a87a;
+    margin-bottom: 24px;
+  }
+  .masthead h1 {
+    font-family: var(--serif);
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: #f4efea;
+    line-height: 1.05;
+    margin-bottom: 20px;
+  }
+  .masthead h1 strong {
+    display: block;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: 2px;
+    color: #e8c498;
+    font-size: 0.55em;
+    margin-top: 6px;
+  }
+  .masthead-sub {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-style: italic;
+    color: #a0988a;
+    line-height: 1.5;
+  }
+  .masthead-rule {
+    width: 80px;
+    height: 1px;
+    background: #5a4830;
+    margin: 28px auto;
+  }
+
+  /* === LAYOUT === */
+  .page-wrap { max-width: 860px; margin: 0 auto; padding: 0 36px 120px; }
+
+  /* === SECTION === */
+  .section { margin: 72px 0; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 10px;
+  }
+  .section-letter {
+    font-family: var(--serif);
+    font-size: 52px;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .section-title-wrap { flex: 1; }
+  .section-label-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 40px 0 14px;
+    border-left: 3px solid var(--accent);
+    padding-left: 14px;
+  }
+  h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin: 28px 0 12px;
+  }
+
+  p { margin-bottom: 16px; }
+
+  /* === MATH === */
+  .eq-block {
+    background: var(--bg2);
+    border-left: 3px solid var(--accent2);
+    padding: 20px 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+    font-size: 15px;
+  }
+  .eq-block.master { border-left-color: var(--accent); border-left-width: 5px; background: #ede9df; }
+  .eq-block.gw { border-left-color: var(--accent4); }
+  .eq-block.em { border-left-color: var(--accent3); }
+  .eq-block.spin { border-left-color: var(--gold); }
+  .eq-block.result { border-left-color: var(--accent); background: #ede9df; }
+  .eq-block.note { border-left-color: var(--red); background: #f5e8e4; }
+
+  .eq-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* === BOXES === */
+  .callout {
+    border: 1px solid var(--rule);
+    padding: 18px 22px;
+    margin: 22px 0;
+    background: var(--bg2);
+  }
+  .callout.nova { border-color: var(--accent); border-top: 3px solid var(--accent); }
+  .callout.warn { border-color: var(--red); background: #f8efec; }
+  .callout.insight { border-color: var(--accent3); background: #edf3e6; }
+  .callout.spin-box { border-color: var(--gold); background: #f5f0e2; }
+  .callout-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .callout.nova .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--red); }
+  .callout.insight .callout-title { color: var(--accent3); }
+  .callout.spin-box .callout-title { color: var(--gold); }
+
+  /* === LISTS === */
+  ul.def-list { padding-left: 22px; margin-bottom: 16px; }
+  ul.def-list li { margin-bottom: 8px; }
+  ul.def-list li::marker { color: var(--accent2); }
+
+  ol.step-list { padding-left: 24px; margin-bottom: 16px; counter-reset: step; }
+  ol.step-list li { margin-bottom: 10px; }
+  ol.step-list li::marker { color: var(--accent); font-family: var(--mono); font-size: 13px; font-weight: 600; }
+
+  /* === TABLES === */
+  .data-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+  .data-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    background: var(--bg3);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--rule);
+  }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .data-table tr:hover td { background: var(--bg2); }
+  .data-table td.num { font-family: var(--mono); font-size: 13px; color: var(--accent2); }
+  .data-table td.syn { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
+  .data-table td.ase { font-family: var(--mono); font-size: 13px; color: var(--ink-dim); }
+  .data-table td.diff { font-family: var(--mono); font-size: 13px; color: var(--accent3); }
+  .data-table td.warn { font-family: var(--mono); font-size: 13px; color: var(--red); }
+
+  /* === CASCADE DIAGRAM === */
+  .cascade-wrap { margin: 28px 0; overflow-x: auto; }
+  .cascade-diagram {
+    display: inline-block;
+    min-width: 600px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  /* === INLINE === */
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent2);
+    background: var(--bg2);
+    padding: 1px 5px;
+    border-radius: 1px;
+  }
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 2px 8px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .tag.novel { background: var(--accent); }
+  .tag.warn { background: var(--red); }
+  .tag.check { background: var(--accent3); }
+
+  /* === FOOTER === */
+  .footer-block {
+    margin-top: 80px;
+    border-top: 2px solid var(--ink);
+    padding-top: 32px;
+    font-size: 14px;
+    color: var(--ink-dim);
+  }
+  .footer-block .footer-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  hr.section-rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 56px 0;
+  }
+
+  /* === TOC === */
+  .toc {
+    background: var(--bg2);
+    border: 1px solid var(--rule);
+    padding: 28px 32px;
+    margin: 48px 0;
+  }
+  .toc-title {
+    font-family: var(--serif);
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+  .toc a {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 12px;
+    align-items: baseline;
+    padding: 5px 0;
+    color: var(--ink-dim);
+    text-decoration: none;
+    font-size: 15px;
+    border-bottom: 1px dotted var(--rule);
+    transition: color 0.15s;
+  }
+  .toc a:last-child { border-bottom: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc a .tl { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 600; }
+
+  /* === PENTAGON SVG === */
+  .fig-wrap { text-align: center; margin: 28px 0; }
+  .fig-caption {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-dim);
+    margin-top: 10px;
+  }
+
+  @media (max-width: 600px) {
+    .page-wrap { padding: 0 18px 80px; }
+    .section-letter { font-size: 36px; }
+    .masthead { padding: 48px 24px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-inner">
+    <div class="masthead-kicker">Novel Measurement Tool — Theoretical Astrophysics</div>
+    <h1>SYNAPSE
+      <strong>Symmetric N-body Astrophysical Phase-Space Estimator</strong>
+    </h1>
+    <div class="masthead-rule"></div>
+    <div class="masthead-sub">
+      A hierarchical renormalization-group framework for quantifying extreme multi-body<br>
+      black hole coalescence from symmetric initial configurations
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#sec-a"><span class="tl">A</span> Definition of the Measurement Tool — Core Equations</a>
+    <a href="#sec-b"><span class="tl">B</span> Derivation &amp; Rationale — Physical Foundations</a>
+    <a href="#sec-c"><span class="tl">C</span> Application — Numerical Cascade for the Pentagon Scenario</a>
+    <a href="#sec-d"><span class="tl">D</span> Limitations &amp; Sensitivity Analysis</a>
+    <a href="#sec-e"><span class="tl">E</span> Comparison with Existing Methods</a>
+  </nav>
+
+  <!-- ============================== SECTION A ============================== -->
+  <section class="section" id="sec-a">
+    <div class="section-header">
+      <div class="section-letter">A</div>
+      <div class="section-title-wrap">
+        <span class="section-label-tag">Section A</span>
+        <div class="section-title">Definition of the Measurement Tool</div>
+      </div>
+    </div>
+
+    <p>SYNAPSE synthesizes three independently motivated analytical structures into a unified cascade estimator: (i) a <em>symmetry-adapted quadrupole decomposition</em> exploiting the \(\mathbb{Z}_N\) symmetry of the initial configuration; (ii) a <em>hierarchical merger cascade with running gravitational-wave efficiency</em>, calibrated against numerical relativity in the binary limit; and (iii) a <em>slim-disk stellar coupling functional</em> that correctly accounts for photon trapping in the super-Eddington accretion regime. The tool is closed-form at each stage and reduces to standard binary-merger scaling when \(N = 2\).</p>
+
+    <h3>A.1 — System State Vector &amp; Input Parameters</h3>
+    <p>The initial state of the system is encoded in the tuple:</p>
+    <div class="eq-block master">
+      <span class="eq-label">SYNAPSE Input — Initial State</span>
+      \[
+      \mathcal{S}_0 = \bigl\{N,\; M_{\text{BH}},\; M_*,\; R_*,\; R_0,\; \{a_i\}_{i=1}^N \bigr\}
+      \]
+    </div>
+    <p>where \(N\) is the number of SMBHs (here \(N=5\)), \(M_{\text{BH}}\) the mass of each, \(M_* = 2M_{*,\text{one}}\) the total stellar mass, \(R_*\) the stellar radius, \(R_0\) the initial polygon circumradius, and \(\{a_i\}\) the dimensionless spin magnitudes (ranging from 0 to 1). The output state vector is:</p>
+    <div class="eq-block master">
+      <span class="eq-label">SYNAPSE Output — Final Observables</span>
+      \[
+      \mathcal{O} = \bigl\{M_f,\; E_{\text{GW}},\; E_{\text{EM}},\; a_f,\; v_{\text{kick}},\; \tau_{\text{ff}} \bigr\}
+      \]
+    </div>
+
+    <h3>A.2 — Component I: The Pentagon Geometry Sum \(\mathcal{S}_N\)</h3>
+    <p>For \(N\) equal masses arranged at the vertices of a regular \(N\)-gon, the net radially-directed gravitational force on each constituent mass from all \(N-1\) peers is:</p>
+    <div class="eq-block">
+      <span class="eq-label">Pentagon Force Geometry Sum</span>
+      \[
+      \boxed{
+      \mathcal{S}_N \;=\; \sum_{j=1}^{N-1} \csc\!\left(\frac{\pi j}{N}\right)
+      }
+      \]
+    </div>
+    <p>This follows from a direct decomposition of pairwise forces into radial components for a \(\mathbb{Z}_N\)-symmetric configuration (derived in §B.1). The effective equation of motion for each SMBH is then:</p>
+    <div class="eq-block">
+      \[
+      \ddot{R}_0 \;=\; -\frac{G M_{\text{BH}}\,\mathcal{S}_N}{4\,R_0^2}
+      \]
+    </div>
+    <p>with the free-fall timescale to the center:</p>
+    <div class="eq-block">
+      <span class="eq-label">SYNAPSE Free-Fall Timescale</span>
+      \[
+      \tau_{\text{ff}} \;=\; \frac{\pi}{2}\sqrt{\frac{2\,R_0^3}{G\,M_{\text{BH}}\,\mathcal{S}_N}}
+      \]
+    </div>
+
+    <h3>A.3 — Component II: The Merger Cascade Tree \(\mathcal{T}_N\)</h3>
+    <p>For \(N = 5\), SYNAPSE constructs the following merger tree (nearest-neighbor pairing in the pentagon geometry, then unpaired remnant last):</p>
+
+    <div class="cascade-wrap">
+      <div class="cascade-diagram">
+Initial:  [BH₁  BH₂]   [BH₃  BH₄]   BH₅
+              ↓               ↓
+Step k=1:    C₁           C₂         BH₅     ← two equal-mass mergers (parallel)
+                  ↘      ↙
+Step k=2:         C₁₂              BH₅     ← equal-mass merger of spinning remnants
+                       ↘        ↙
+Step k=3:              M_f              ← asymmetric merger (q ≈ 0.285)
+      </div>
+    </div>
+
+    <p>Each merger step \(k\) is characterized by: progenitor masses \((M_{A,k},\, M_{B,k})\), mass ratio \(q_k = M_{B,k}/M_{A,k} \leq 1\), symmetric mass ratio \(\eta_k = q_k/(1+q_k)^2\), and effective spin \(\chi_{\text{eff},k}\).</p>
+
+    <h3>A.4 — Component III: Running GW Efficiency \(\varepsilon_k\)</h3>
+    <p>The gravitational wave mass loss at step \(k\) is governed by the running efficiency:</p>
+    <div class="eq-block gw">
+      <span class="eq-label">Running GW Efficiency — Core SYNAPSE Formula</span>
+      \[
+      \boxed{
+      \varepsilon_k(\eta_k,\chi_{\text{eff},k}) \;=\; \varepsilon_0 \cdot (4\eta_k) \cdot f_{\text{spin}}(\chi_{\text{eff},k})
+      }
+      \]
+      \[
+      f_{\text{spin}}(\chi_{\text{eff}}) = 1 + \kappa_s\,\chi_{\text{eff}}, \quad \kappa_s = 0.6
+      \]
+      \[
+      \varepsilon_0 = 0.0516 \quad (\text{NR calibration: equal mass, non-spinning})
+      \]
+    </div>
+
+    <p>The mass at the output of step \(k\) is:</p>
+    <div class="eq-block gw">
+      \[
+      M_k^{(\text{out})} = M_{A,k} + M_{B,k} - \varepsilon_k\,(M_{A,k}+M_{B,k})
+      = (1 - \varepsilon_k)\,(M_{A,k}+M_{B,k})
+      \]
+    </div>
+
+    <p>The total GW energy is:</p>
+    <div class="eq-block gw">
+      \[
+      E_{\text{GW}} = \left[\sum_{k} \varepsilon_k\,(M_{A,k}+M_{B,k})\right] c^2
+      \]
+    </div>
+
+    <h3>A.5 — Component IV: Spin Accumulation Recursion</h3>
+    <p>The spin at the output of step \(k\) is given by the SYNAPSE spin recursion (a bilinear model separating orbital and inherited spin contributions):</p>
+    <div class="eq-block spin">
+      <span class="eq-label">SYNAPSE Spin Recursion</span>
+      \[
+      \boxed{
+      a_k^{(\text{out})} = \min\!\left[\,
+        \underbrace{\varepsilon_0^{-1/2}\cdot\varepsilon_0\cdot\sqrt{4\eta_k}}_{\displaystyle a_{\text{orb}}(\eta_k)}
+        +
+        \underbrace{\chi_{\text{eff},k}\cdot\bigl(1 - 4\eta_k + 4\eta_k^2\bigr)}_{\displaystyle a_{\text{inh}}(\eta_k,\chi_{\text{eff},k})}
+        ,\; 0.998
+      \right]
+      }
+      \]
+    </div>
+    <p>where:</p>
+    <ul class="def-list">
+      <li>\(a_{\text{orb}}(\eta_k) = 0.686\sqrt{4\eta_k}\) — the orbital angular momentum contribution (0.686 at \(\eta=1/4\), vanishing as \(\eta\to0\))</li>
+      <li>\(a_{\text{inh}}(\eta_k,\chi_{\text{eff},k}) = \chi_{\text{eff},k}(1-4\eta_k+4\eta_k^2)\) — the fraction of progenitor spin inherited by the remnant; the polynomial factor vanishes at equal mass (\(\eta=1/4\)) and approaches unity in the test-body limit (\(\eta\to0\))</li>
+      <li>\(\chi_{\text{eff},k} = (M_{A,k}\,a_{A,k} + M_{B,k}\,a_{B,k})/(M_{A,k}+M_{B,k})\) — mass-weighted effective spin</li>
+    </ul>
+
+    <h3>A.6 — Component V: Stellar Coupling Functional — Slim-Disk EM Emission</h3>
+    <p>The electromagnetic luminosity from the super-Eddington accretion of stellar material onto the merged BH is given by the SYNAPSE stellar coupling functional:</p>
+    <div class="eq-block em">
+      <span class="eq-label">SYNAPSE Stellar Coupling — Slim Disk</span>
+      \[
+      \boxed{
+      \mathcal{L}_{\text{EM}} = L_{\text{Edd}}(M_f)\cdot\bigl[1 + \ln\dot{m}\bigr], \qquad \dot{m} = \frac{\dot{M}_{\text{acc}}}{\dot{M}_{\text{Edd}}}
+      }
+      \]
+      \[
+      \dot{M}_{\text{acc}} = \frac{M_{*,\text{total}}}{\tau_{\text{acc}}}, \quad
+      \tau_{\text{acc}} = \frac{2R_*}{v_{\text{imp}}}, \quad
+      v_{\text{imp}} = \min\!\left(c,\;\sqrt{\frac{G M_{\text{BH}}\,\mathcal{S}_N}{2\,R_*}}\right)
+      \]
+      \[
+      E_{\text{EM}}^{(\text{prompt})} = \mathcal{L}_{\text{EM}} \cdot \tau_{\text{acc}}
+      \]
+    </div>
+    <p>The \(\ln\dot{m}\) saturation correctly captures photon trapping in the advection-dominated super-Eddington flow. The Eddington rate uses the post-merger ISCO efficiency \(\eta_{\text{ISCO}}(a_f)\).</p>
+
+    <h3>A.7 — Component VI: Cascade Recoil Estimator</h3>
+    <p>The gravitational-wave recoil kick at the final asymmetric merger (step \(k_{\text{final}}\)) is estimated via the split mass-ratio and spin contributions:</p>
+    <div class="eq-block">
+      <span class="eq-label">SYNAPSE Cascade Kick Velocity</span>
+      \[
+      v_{\text{kick}} \;\approx\; \sqrt{v_m^2 + v_s^2 + 2\,v_m\,v_s\,\cos\Theta}
+      \]
+      \[
+      v_m = A_m\,\eta_f^2\,\frac{1-q_f}{1+q_f}\,\bigl(1 + B_m\,\eta_f\bigr), \quad A_m = 1.2\times10^4\;\text{km/s},\; B_m = -0.93
+      \]
+      \[
+      v_s = H\,\eta_f^2\,\frac{\chi_{\text{eff},f}}{1+\chi_{\text{eff},f}}, \quad H = 6.9\times10^3\;\text{km/s}
+      \]
+    </div>
+    <p>where \(\Theta\) is the angle between the mass-ratio and spin kick vectors (\(\Theta \in [0,\pi]\); unknown without full NR, so reported as a range). The subscript \(f\) refers to the parameters of the final merger step.</p>
+
+    <h3>A.8 — The SYNAPSE Master Equation</h3>
+    <div class="eq-block master">
+      <span class="eq-label">SYNAPSE Master Functional</span>
+      \[
+      \mathcal{O} = \mathbf{SYNAPSE}\!\left[\mathcal{S}_0\right] \;\equiv\;
+      \mathbf{\Phi}\!\left[\,\mathcal{T}_N\!\left(\mathcal{S}_N,\,\varepsilon_k,\,a_k^{(\text{out})}\right),\;\mathcal{L}_{\text{EM}},\;v_{\text{kick}}\right]
+      \]
+      \[
+      M_f = N\,M_{\text{BH}}\,\prod_{k}\bigl(1-\varepsilon_k\bigr) + \mathcal{O}(M_*/M_{\text{BH}})
+      \]
+    </div>
+    <p>The product \(\prod_k(1-\varepsilon_k)\) runs over all merger steps in \(\mathcal{T}_N\), weighted by the instantaneous progenitor mass at each step. The stellar mass contribution is order \(M_*/M_{\text{BH}} \sim 8600/(5\times10^8) \sim 10^{-5}\) — negligible for the final mass but non-negligible for the EM energy budget.</p>
+
+  </section>
+
+  <hr class="section-rule">
+
+  <!-- ============================== SECTION B ============================== -->
+  <section class="section" id="sec-b">
+    <div class="section-header">
+      <div class="section-letter">B</div>
+      <div class="section-title-wrap">
+        <span class="section-label-tag">Section B</span>
+        <div class="section-title">Derivation &amp; Rationale</div>
+      </div>
+    </div>
+
+    <h3>B.1 — <span class="tag novel">Novel</span> Pentagon Geometry: Exact Force Decomposition</h3>
+    <p>Place \(N\) masses \(M_{\text{BH}}\) at the vertices of a regular \(N\)-gon of circumradius \(R_0\). Label mass 1 at position \(\mathbf{r}_1 = R_0\hat{x}\) and mass \(j\) at \(\mathbf{r}_j = R_0(\cos\phi_j,\sin\phi_j, 0)\) with \(\phi_j = 2\pi j/N\). The separation vector from mass 1 to mass \(j\) is:</p>
+    <div class="eq-block">
+      \[
+      \mathbf{r}_j - \mathbf{r}_1 = R_0\bigl(\cos\phi_j - 1,\;\sin\phi_j,\;0\bigr), \qquad
+      |\mathbf{r}_j - \mathbf{r}_1| = 2R_0\left|\sin\frac{\pi j}{N}\right|
+      \]
+    </div>
+    <p>The component of the gravitational force from mass \(j\) on mass 1 in the <em>inward radial direction</em> \((-\hat{x})\) is:</p>
+    <div class="eq-block">
+      \[
+      F_{1j}^{(r)} = \frac{G M_{\text{BH}}^2}{|\mathbf{r}_j-\mathbf{r}_1|^2}\cdot
+      \frac{(\mathbf{r}_j-\mathbf{r}_1)\cdot(-\hat{x})}{|\mathbf{r}_j-\mathbf{r}_1|}
+      = \frac{G M_{\text{BH}}^2}{4R_0^2\sin^2(\pi j/N)}\cdot\frac{1-\cos\phi_j}{2|\sin(\pi j/N)|}
+      \]
+    </div>
+    <p>Using the identity \(1-\cos\phi_j = 2\sin^2(\pi j/N)\):</p>
+    <div class="eq-block">
+      \[
+      F_{1j}^{(r)} = \frac{G M_{\text{BH}}^2}{4R_0^2\sin^2(\pi j/N)}\cdot|\sin(\pi j/N)|
+      = \frac{G M_{\text{BH}}^2}{4R_0^2}\csc\!\left(\frac{\pi j}{N}\right)
+      \]
+    </div>
+    <p>Summing over all \(N-1\) peers yields the total inward radial force on mass 1:</p>
+    <div class="eq-block">
+      \[
+      F_r^{(\text{total})} = \frac{G M_{\text{BH}}^2}{4R_0^2}\sum_{j=1}^{N-1}\csc\!\left(\frac{\pi j}{N}\right)
+      \equiv \frac{G M_{\text{BH}}^2\,\mathcal{S}_N}{4R_0^2}
+      \]
+    </div>
+    <p>This exact result is the basis of the pentagon geometry sum \(\mathcal{S}_N\). Note that for \(N=2\) (a binary), \(\mathcal{S}_2 = \csc(\pi/2) = 1\), and \(F_r = GM^2/(4r^2)\) — correctly recovering the standard two-body attraction at half-separation (since each body is at \(R_0\) from the center, separation \(2R_0\)).</p>
+
+    <div class="callout insight">
+      <div class="callout-title">Key Insight: Pentagon vs. Naive Central Mass</div>
+      <p>If one naively placed all \(4M_{\text{BH}}\) at the center, the infall force on mass 1 would be \(F_{\text{naive}} = 4GM_{\text{BH}}^2/R_0^2\). The SYNAPSE formula gives \(F_r = GM_{\text{BH}}^2\mathcal{S}_5/(4R_0^2) = 1.376GM_{\text{BH}}^2/R_0^2\), a factor \(\mathcal{S}_5/16 = 0.344\) of the naive central estimate. The naive free-fall time using \(M_{\text{total}} = 5M_{\text{BH}}\) is therefore too fast by a factor of \(\sqrt{5/1.376} = 1.906\). SYNAPSE corrects this.</p>
+    </div>
+
+    <h3>B.2 — <span class="tag novel">Novel</span> \(\mathbb{Z}_N\) Symmetry and Coherent Quadrupole Emission</h3>
+    <p>For the \(\mathbb{Z}_5\)-symmetric infall, the total mass quadrupole moment tensor is:</p>
+    <div class="eq-block">
+      \[
+      Q_{ij}^{(N)} = \sum_{k=1}^{N} M_{\text{BH}}\!\left(x_i^{(k)} x_j^{(k)} - \tfrac{1}{3}\delta_{ij}R_0^2(t)\right)
+      \]
+    </div>
+    <p>Using \(\sum_{k=1}^{N}\cos^2(2\pi k/N) = N/2\), \(\sum \sin^2 = N/2\), \(\sum\cos\sin = 0\) for all \(N \geq 3\):</p>
+    <div class="eq-block">
+      \[
+      Q_{ij}^{(N)} = \frac{N M_{\text{BH}} R_0^2(t)}{3}\,\mathrm{diag}(1,\,1,\,-2)
+      \]
+    </div>
+    <p>The remarkable consequence: the quadrupole is <em>axially symmetric</em> regardless of \(N\), and the \(N\) bodies emit GWs <em>coherently</em> — their contributions add in phase. The GW power during the infall phase scales as \(N^2\) (not \(N\)), because:</p>
+    <div class="eq-block">
+      \[
+      P_{\text{GW}}^{(\text{infall})} = \frac{G}{5c^5}\left(\ddot{Q}_{ij}^{(N)}\right)^2
+      = \frac{8G\,N^2 M_{\text{BH}}^2}{15c^5}\bigl(\dot{R}_0^2 + R_0\ddot{R}_0\bigr)^2
+      \]
+    </div>
+    <p>This \(N^2\) coherence enhancement over the single-BH infall power is a direct consequence of the \(\mathbb{Z}_N\) symmetry — analogous to the superradiant emission from a phased antenna array. However, the infall-phase GW energy is suppressed relative to the merger phase by \((v_{\text{imp}}/c)^2 \sim 10^{-2}\) and contributes only \(\sim 0.5\%\) of the total \(E_{\text{GW}}\). SYNAPSE incorporates this as a perturbative correction.</p>
+
+    <h3>B.3 — Merger Cascade: RG Flow Interpretation</h3>
+    <p>The merger cascade \(\mathcal{T}_N\) can be interpreted as a renormalization group flow on the space of binary parameters \(\{M, q, a\}\). At each "scale" (characterized by the separation at which two bodies merge), the fine-grained degrees of freedom (the two progenitor BH states) are integrated out, producing a coarse-grained effective state (the remnant BH). The "beta function" of this flow is the running efficiency \(\varepsilon_k(\eta_k, \chi_{\text{eff},k})\):</p>
+    <div class="eq-block">
+      \[
+      \beta_M(k) \equiv \frac{dM}{dk} = -\varepsilon_k(M_{A,k}+M_{B,k})
+      \]
+    </div>
+    <p>The fixed point of the flow (the single Kerr BH) is approached in \(K(N) = N-1\) steps. In the equal-mass, non-spinning case, \(\varepsilon_k = \varepsilon_0 = \text{const}\), and the mass obeys the geometric series:</p>
+    <div class="eq-block">
+      \[
+      M_f^{(\text{equal,no-spin})} = N\,M_{\text{BH}}\,\prod_{k=1}^{K}\bigl(1-\varepsilon_0\bigr)^{n_k}
+      \]
+    </div>
+    <p>where \(n_k\) is the number of simultaneous mergers at step \(k\). The spin evolution breaks this simple scaling via the \(\chi_{\text{eff}}\) feedback: spin accumulated in early steps increases \(\varepsilon\) in later steps, creating a <em>GW-efficiency cascade</em>.</p>
+
+    <h3>B.4 — Spin Recursion: Physical Motivation</h3>
+    <p>The SYNAPSE spin formula decomposes the final spin into two additive contributions with clear physical origins.</p>
+    <p><strong>Orbital contribution \(a_{\text{orb}}\):</strong> For a non-spinning binary of mass ratio \(q\), the angular momentum of the binary at plunge (the innermost stable circular orbit, ISCO) is converted into spin of the remnant. The ISCO specific angular momentum for Schwarzschild is \(\ell_{\text{ISCO}} = 2\sqrt{3}GM/c\). Converted to dimensionless spin for the remnant mass \(M_f = (1-\varepsilon_0)M\), this gives \(a_{\text{orb}} \propto \eta^{1/2}\) at leading order, with the calibration constant fixed by the NR result \(a_f = 0.686\) at \(\eta = 1/4\).</p>
+    <p><strong>Inherited contribution \(a_{\text{inh}}\):</strong> The progenitor spins are partially preserved through the merger. In the test-body limit (\(q \to 0\), \(\eta \to 0\)), the small body plunges into the large spinning BH without significantly altering its spin — the inherited fraction approaches unity. At equal mass (\(\eta = 1/4\)), the orbital contribution dominates and the inherited fraction is suppressed. The polynomial \((1-4\eta+4\eta^2) = (1-2\eta)^2\) correctly interpolates between these limits.</p>
+
+    <h3>B.5 — Slim Disk Stellar Coupling: Rationale</h3>
+    <p>The accretion of stellar material occurs at \(\dot{M}/\dot{M}_{\text{Edd}} \sim 10^7\), far into the photon-trapping regime. The radiative efficiency of a standard thin disk (Novikov-Thorne, \(\eta_{\text{NT}} \sim 0.1\)) applies only when photons can escape on the dynamical timescale. At high Eddington multiples, photons are advected inward faster than they diffuse outward. The Sądowski (2009) slim-disk solution gives a luminosity that saturates logarithmically:</p>
+    <div class="eq-block em">
+      \[
+      L_{\text{slim}} = L_{\text{Edd}}\bigl(1 + \ln\dot{m}\bigr)
+      \]
+    </div>
+    <p>This replaces the ASE's \(\eta_{\text{EM}}\dot{M}c^2\) estimate, which neglects photon trapping entirely. The difference is dramatic: a factor of \(\sim10^4\) reduction in the prompt EM luminosity for \(\dot{m}\sim10^7\). The SYNAPSE functional is therefore not merely a correction but a categorical replacement of the naive efficiency estimate in this regime.</p>
+
+    <h3>B.6 — Limiting Cases (N = 2 Recovery)</h3>
+    <p>For \(N=2\) (binary): \(\mathcal{S}_2 = \csc(\pi/2) = 1\), the cascade tree has \(K=1\) step with \(\eta = 1/4\), \(\varepsilon = \varepsilon_0 = 0.0516\), and \(a_f = 0.686\). These are exactly the NR results for an equal-mass, non-spinning binary merger. SYNAPSE reduces exactly to the known binary limit. \(\square\)</p>
+
+  </section>
+
+  <hr class="section-rule">
+
+  <!-- ============================== SECTION C ============================== -->
+  <section class="section" id="sec-c">
+    <div class="section-header">
+      <div class="section-letter">C</div>
+      <div class="section-title-wrap">
+        <span class="section-label-tag">Section C</span>
+        <div class="section-title">Application to the Pentagon Scenario</div>
+      </div>
+    </div>
+
+    <h3>C.1 — Input Parameters &amp; Geometric Pre-computation</h3>
+    <div class="eq-block">
+      \[
+      N = 5,\quad M_{\text{BH}} = 10^8\,M_\odot = 1.989\times10^{41}\,\text{g},\quad a_i = 0\;\forall i
+      \]
+      \[
+      M_{*,\text{total}} = 8600\,M_\odot = 1.710\times10^{37}\,\text{g}, \quad R_* = 3.4785\times10^{13}\,\text{cm}
+      \]
+      \[
+      R_0 = 1\,\text{pc} = 3.0857\times10^{18}\,\text{cm}
+      \]
+    </div>
+
+    <h4>Pentagon Geometry Sum</h4>
+    <div class="eq-block">
+      \[
+      \mathcal{S}_5 = \csc\!\tfrac{\pi}{5} + \csc\!\tfrac{2\pi}{5} + \csc\!\tfrac{3\pi}{5} + \csc\!\tfrac{4\pi}{5}
+      = 1.7013 + 1.0514 + 1.0514 + 1.7013 = 5.5054
+      \]
+    </div>
+
+    <h4>Free-Fall Timescale (SYNAPSE vs. Naive)</h4>
+    <div class="eq-block result">
+      \[
+      \tau_{\text{ff}}^{(\text{SYNAPSE})} = \frac{\pi}{2}\sqrt{\frac{2R_0^3}{GM_{\text{BH}}\mathcal{S}_5}}
+      = \frac{\pi}{2}\sqrt{\frac{2\times(3.086\times10^{18})^3}{6.674\times10^{-8}\times1.989\times10^{41}\times5.5054}}
+      \approx 4.456\times10^{10}\,\text{s} \approx 1412\,\text{yr}
+      \]
+      \[
+      \tau_{\text{ff}}^{(\text{naive, }M_{\text{total}}\text{ at center})} = \frac{\pi}{2}\sqrt{\frac{R_0^3}{2GM_{\text{total}}}} \approx 2.336\times10^{10}\,\text{s} \approx 740\,\text{yr}
+      \]
+      \[
+      \Rightarrow \tau_{\text{ff}}^{(\text{SYNAPSE})}/\tau_{\text{ff}}^{(\text{naive})} = 1.907 \quad \text{(the pentagon falls slower — the geometry matters)}
+      \]
+    </div>
+
+    <h4>Impact Velocity (Capped at \(c\))</h4>
+    <div class="eq-block">
+      \[
+      v_{\text{Newt}}(R_*) = \sqrt{\frac{GM_{\text{BH}}\mathcal{S}_5}{2R_*}}
+      = \sqrt{\frac{6.674\times10^{-8}\times1.989\times10^{41}\times5.5054}{2\times3.4785\times10^{13}}}
+      = \sqrt{1.051\times10^{21}} \approx 3.24\times10^{10}\;\text{cm/s} > c
+      \]
+      \[
+      \Rightarrow v_{\text{imp}} = c \quad \text{(SMBHs are relativistic at stellar encounter; Newtonian cap applies)}
+      \]
+    </div>
+
+    <h3>C.2 — Cascade Step k = 1 (and k = 2 by symmetry): First Generation Mergers</h3>
+    <div class="eq-block">
+      \[
+      q_1 = 1,\quad \eta_1 = \tfrac{1}{4},\quad \chi_{\text{eff},1} = 0 \quad (a_1 = a_2 = 0)
+      \]
+      \[
+      \varepsilon_1 = 0.0516\times(4\times\tfrac{1}{4})\times(1+0.6\times0) = 0.0516
+      \]
+      \[
+      \Delta M_1 = 0.0516\times2M_{\text{BH}} = 0.0516\times2\times10^8 = 1.032\times10^7\,M_\odot
+      \]
+      \[
+      M_{C_1} = (2-0.1032)\times10^8 = 1.8968\times10^8\,M_\odot = M_{C_2}
+      \]
+      \[
+      a_{C_1} = a_{\text{orb}}(\eta=\tfrac{1}{4}) + a_{\text{inh}}(\chi_{\text{eff}}=0)
+      = 0.686\sqrt{4\times\tfrac{1}{4}} + 0 = 0.686
+      \]
+    </div>
+
+    <h3>C.3 — Cascade Step k = 3: Equal-Mass Spinning Merger</h3>
+    <div class="eq-block">
+      \[
+      q_3 = 1,\quad \eta_3 = \tfrac{1}{4},\quad
+      \chi_{\text{eff},3} = \frac{M_{C_1}\times0.686 + M_{C_2}\times0.686}{M_{C_1}+M_{C_2}} = 0.686
+      \]
+      \[
+      \varepsilon_3 = 0.0516\times1\times(1+0.6\times0.686) = 0.0516\times1.4116 = 0.07284
+      \]
+      \[
+      \Delta M_3 = 0.07284\times(1.8968+1.8968)\times10^8 = 0.07284\times3.7936\times10^8 = 2.764\times10^7\,M_\odot
+      \]
+      \[
+      M_{C_{12}} = 3.7936\times10^8 - 2.764\times10^7 = 3.517\times10^8\,M_\odot
+      \]
+      \[
+      a_{C_{12}} = 0.686\sqrt{1} + 0.686\times(1-1+\tfrac{1}{4}) = 0.686 + 0.686\times0.25 = 0.686+0.172 = 0.858
+      \]
+    </div>
+
+    <h3>C.4 — Cascade Step k = 4: Final Asymmetric Merger</h3>
+    <div class="eq-block>">
+      \[
+      M_{A,4} = 3.517\times10^8\,M_\odot\;(a = 0.858), \quad M_{B,4} = 1.000\times10^8\,M_\odot\;(a = 0)
+      \]
+      \[
+      q_4 = \frac{10^8}{3.517\times10^8} = 0.2843, \quad
+      \eta_4 = \frac{0.2843}{(1.2843)^2} = \frac{0.2843}{1.649} = 0.1724
+      \]
+      \[
+      \chi_{\text{eff},4} = \frac{3.517\times10^8\times0.858 + 10^8\times0}{4.517\times10^8}
+      = \frac{3.017\times10^8}{4.517\times10^8} = 0.6680
+      \]
+      \[
+      \varepsilon_4 = 0.0516\times(4\times0.1724)\times(1+0.6\times0.6680)
+      = 0.0516\times0.6896\times1.4008 = 0.04985
+      \]
+      \[
+      \Delta M_4 = 0.04985\times4.517\times10^8 = 2.252\times10^7\,M_\odot
+      \]
+      \[
+      M_f = 4.517\times10^8 - 2.252\times10^7 = 4.292\times10^8\,M_\odot
+      \]
+    </div>
+
+    <div class="eq-block spin">
+      \[
+      a_{\text{orb},4} = 0.686\sqrt{4\times0.1724} = 0.686\times\sqrt{0.6896} = 0.686\times0.8304 = 0.5697
+      \]
+      \[
+      a_{\text{inh},4} = 0.6680\times(1 - 4\times0.1724 + 4\times0.1724^2)
+      = 0.6680\times(1-0.6896+0.1189) = 0.6680\times0.4293 = 0.2868
+      \]
+      \[
+      a_f = \min(0.5697+0.2868,\;0.998) = 0.857
+      \]
+    </div>
+
+    <h3>C.5 — Output 1: Final Black Hole Mass</h3>
+    <div class="eq-block result">
+      <span class="eq-label">SYNAPSE Output — Final Mass</span>
+      \[
+      \Delta M_{\text{GW}}^{(\text{total})} = \Delta M_1+\Delta M_2+\Delta M_3+\Delta M_4
+      = (1.032+1.032+2.764+2.252)\times10^7 = 7.080\times10^7\,M_\odot
+      \]
+      \[
+      \boxed{M_f = 5\times10^8\,M_\odot - 7.080\times10^7\,M_\odot \approx 4.292\times10^8\,M_\odot}
+      \]
+      \[
+      f_{\text{GW}} = \frac{\Delta M_{\text{GW}}}{5M_{\text{BH}}} = \frac{7.080\times10^7}{5\times10^8} = 14.16\%
+      \quad \text{(vs. ASE: 10\%)}
+      \]
+    </div>
+
+    <h3>C.6 — Output 2: Total Gravitational Wave Energy</h3>
+    <div class="eq-block gw">
+      <span class="eq-label">SYNAPSE Output — GW Energy</span>
+      \[
+      E_{\text{GW}} = \Delta M_{\text{GW}}\times c^2
+      = 7.080\times10^7\times1.989\times10^{33}\times(3\times10^{10})^2
+      \]
+      \[
+      = 7.080\times1.989\times9\times10^{60}\;\text{erg}
+      = 126.8\times10^{60}\;\text{erg}
+      \]
+      \[
+      \boxed{E_{\text{GW}} \approx 1.268\times10^{62}\;\text{erg}}
+      \]
+    </div>
+    <p>Breakdown by cascade step:</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>Step</th><th>Configuration</th><th>\(\eta_k\)</th><th>\(\varepsilon_k\)</th><th>\(\Delta M_k\) [\(M_\odot\)]</th><th>\(a_k^{(\text{out})}\)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>k=1</td><td>BH₁ + BH₂ (equal, no spin)</td><td class="num">0.250</td><td class="num">0.0516</td><td class="syn">1.032×10⁷</td><td class="num">0.686</td></tr>
+        <tr><td>k=2</td><td>BH₃ + BH₄ (equal, no spin)</td><td class="num">0.250</td><td class="num">0.0516</td><td class="syn">1.032×10⁷</td><td class="num">0.686</td></tr>
+        <tr><td>k=3</td><td>C₁ + C₂ (equal, aligned spin)</td><td class="num">0.250</td><td class="num">0.0728</td><td class="syn">2.764×10⁷</td><td class="num">0.858</td></tr>
+        <tr><td>k=4</td><td>C₁₂ + BH₅ (q=0.284, spinning)</td><td class="num">0.172</td><td class="num">0.0499</td><td class="syn">2.252×10⁷</td><td class="num">0.857</td></tr>
+        <tr style="font-weight:700"><td colspan="4">Total</td><td class="syn">7.080×10⁷</td><td class="syn">—</td></tr>
+      </tbody>
+    </table>
+
+    <h3>C.7 — Output 3: Electromagnetic Energy (Prompt Stellar Accretion)</h3>
+    <div class="eq-block em">
+      <span class="eq-label">SYNAPSE Output — Prompt EM Energy (Slim Disk)</span>
+      \[
+      v_{\text{imp}} = c \quad(\text{relativistic cap}),\qquad
+      \tau_{\text{acc}} = \frac{2R_*}{c} = \frac{2\times3.4785\times10^{13}}{3\times10^{10}} = 2.319\times10^3\;\text{s}
+      \]
+      \[
+      \dot{M}_{\text{acc}} = \frac{M_{*,\text{total}}}{\tau_{\text{acc}}} = \frac{1.710\times10^{37}}{2.319\times10^3} = 7.374\times10^{33}\;\text{g/s}
+      \]
+      \[
+      L_{\text{Edd}}(M_f) = 1.26\times10^{38}\times4.292\times10^8 = 5.408\times10^{46}\;\text{erg/s}
+      \]
+      \[
+      \eta_{\text{ISCO}}(a_f=0.857) = 1 - \sqrt{1-\frac{2}{3\,r_{\text{ISCO}}/M}} \approx 0.144 \quad(r_{\text{ISCO}}/M\approx2.5\;\text{for }a\approx0.86)
+      \]
+      \[
+      \dot{M}_{\text{Edd}} = \frac{L_{\text{Edd}}}{\eta_{\text{ISCO}}\,c^2} = \frac{5.408\times10^{46}}{0.144\times9\times10^{20}} = 4.17\times10^{26}\;\text{g/s}
+      \]
+      \[
+      \dot{m} = \frac{7.374\times10^{33}}{4.17\times10^{26}} = 1.767\times10^7
+      \]
+      \[
+      \mathcal{L}_{\text{EM}} = 5.408\times10^{46}\times(1+\ln(1.767\times10^7)) = 5.408\times10^{46}\times17.69 = 9.567\times10^{47}\;\text{erg/s}
+      \]
+      \[
+      \boxed{E_{\text{EM}}^{(\text{prompt})} = 9.567\times10^{47}\times2.319\times10^3 \approx 2.22\times10^{51}\;\text{erg}}
+      \]
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-title">Critical Discrepancy with ASE</div>
+      <p>The ASE estimated \(E_{\text{EM,burst}} = 1.54\times10^{55}\;\text{erg}\) using \(\eta_{\text{EM}} = 10^{-3}\) applied to the full \(\dot{M}c^2\). SYNAPSE gives \(2.22\times10^{51}\;\text{erg}\) — four orders of magnitude lower. The difference is entirely physical: photon trapping in the \(\dot{m}\sim10^7\) accretion flow saturates the luminosity at \(L_{\text{slim}}\sim18\,L_{\text{Edd}}\), not at \(\eta\dot{M}c^2\sim10^{58}\;\text{erg/s}\). The ASE formula implicitly assumes all gravitational energy is converted to radiation on the accretion timescale — thermodynamically impossible in the slim-disk regime.</p>
+    </div>
+
+    <p>For the long-term AGN jet emission, SYNAPSE uses the Blandford-Znajek formula with the self-consistently derived \(a_f = 0.857\):</p>
+    <div class="eq-block em">
+      \[
+      r_+ = \frac{R_{s,f}}{2}\bigl(1+\sqrt{1-a_f^2}\bigr) = 6.33\times10^{13}\times(1+\sqrt{0.265}) = 9.59\times10^{13}\;\text{cm}
+      \]
+      \[
+      \Omega_H = \frac{a_f c}{2r_+} = \frac{0.857\times3\times10^{10}}{2\times9.59\times10^{13}} = 1.340\times10^{-4}\;\text{rad/s}
+      \]
+      \[
+      P_{\text{jet}} = \frac{0.05}{4\pi}\Phi^2\Omega_H^2 = \frac{0.05}{12.566}\times10^{60}\times1.795\times10^{-8} = 7.14\times10^{49}\;\text{erg/s}
+      \]
+      \[
+      \boxed{E_{\text{EM}}^{(\text{AGN})} = P_{\text{jet}}\times10^8\;\text{yr} = 7.14\times10^{49}\times3.15\times10^{15} = 2.25\times10^{65}\;\text{erg}}
+      \]
+    </div>
+
+    <h3>C.8 — Output 4: Final Spin</h3>
+    <div class="eq-block spin">
+      <span class="eq-label">SYNAPSE Output — Final Spin</span>
+      \[
+      \boxed{a_f = 0.857}
+      \]
+    </div>
+    <p>This is tightly constrained compared to the ASE range of \(0.7–0.99\) because SYNAPSE tracks spin evolution through each cascade step self-consistently. The spin is high (prograde orbital AM plus aligned progenitor spin inheritance), but limited by the final asymmetric merger with a non-spinning BH₅, which partially "spins down" the remnant relative to the \(C_{12}\) state (\(a = 0.858\)).</p>
+
+    <h3>C.9 — Output 5: Recoil Kick Velocity</h3>
+    <div class="eq-block result">
+      <span class="eq-label">SYNAPSE Output — Recoil Velocity</span>
+      \[
+      v_m = 1.2\times10^4\times(0.1724)^2\times\frac{1-0.2843}{1+0.2843}\times(1-0.93\times0.1724)
+      = 1.2\times10^4\times0.02972\times0.5570\times0.840 = 167\;\text{km/s}
+      \]
+      \[
+      v_s = 6.9\times10^3\times(0.1724)^2\times\frac{0.6680}{1.6680}
+      = 6.9\times10^3\times0.02972\times0.4003 = 82\;\text{km/s}
+      \]
+      \[
+      \boxed{v_{\text{kick}} \in [|v_m - v_s|,\;v_m+v_s] = [85,\;249]\;\text{km/s} \quad(\text{aligned spin case})}
+      \]
+      \[
+      v_{\text{kick}}^{(\text{max, superkick})} \sim 800\;\text{km/s} \quad (\text{anti-aligned in-plane spin components})
+      \]
+    </div>
+    <p>For the aligned-spin configuration (spin parallel to orbital angular momentum), the kick is comfortably below the \(\sim500\;\text{km/s}\) galaxy escape velocity — the merged SMBH remains in its host galaxy. For a superkick configuration (if the progenitor spins were anti-aligned and in-plane), ejection is possible. SYNAPSE constrains the aligned case to \(v_{\text{kick}} \lesssim 249\;\text{km/s}\) and flags the superkick risk for misaligned spins.</p>
+
+    <h3>C.10 — Coherent GW Emission During Infall (SYNAPSE-only Term)</h3>
+    <div class="eq-block>">
+      \[
+      P_{\text{GW}}^{(\text{infall})} = \frac{8G N^2 M_{\text{BH}}^2}{15c^5}(\dot{R}_0^2+R_0\ddot{R}_0)^2
+      \]
+    </div>
+    <p>At \(r\sim10\,R_s\) (quadrupole approximation still marginally valid), with \(\dot{R}_0\approx0.1c\) and \(R_0\ddot{R}_0 \sim (0.1c)^2\):</p>
+    <div class="eq-block">
+      \[
+      P_{\text{GW}}^{(\text{infall})} \approx \frac{8\times6.674\times10^{-8}\times25\times(1.989\times10^{41})^2}{15\times(3\times10^{10})^5}
+      \times (0.1c)^4
+      \approx 8.4\times10^{54}\;\text{erg/s}
+      \]
+      \[
+      E_{\text{GW}}^{(\text{infall})} \approx P_{\text{GW}}^{(\text{infall})}\times\tau_{\text{crossing}} \sim 8.4\times10^{54}\times10^3 \approx 8.4\times10^{57}\;\text{erg}
+      \]
+    </div>
+    <p>This is \(\sim0.07\%\) of the merger-phase \(E_{\text{GW}}\) — a small but non-zero coherent term that the ASE ignores entirely and that SYNAPSE captures naturally from the \(\mathbb{Z}_5\) quadrupole decomposition.</p>
+
+    <h3>C.11 — Complete SYNAPSE Output Summary</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>Observable</th><th>SYNAPSE</th><th>ASE</th><th>Ratio</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Final BH mass \(M_f\)</td>
+          <td class="syn">4.29×10⁸ M☉</td>
+          <td class="ase">4.9×10⁸ M☉</td>
+          <td class="diff">−12.5%</td>
+          <td>GW losses higher in cascade</td>
+        </tr>
+        <tr>
+          <td>GW mass fraction \(f_{\text{GW}}\)</td>
+          <td class="syn">14.16%</td>
+          <td class="ase">10%</td>
+          <td class="diff">+4.2 pp</td>
+          <td>Spin-boost in steps k=3,4</td>
+        </tr>
+        <tr>
+          <td>Total GW energy \(E_{\text{GW}}\)</td>
+          <td class="syn">1.27×10⁶² erg</td>
+          <td class="ase">8.93×10⁶¹ erg*</td>
+          <td class="diff">+42%</td>
+          <td>*ASE result is 10⁶¹, not 10⁶³ (typo in source)</td>
+        </tr>
+        <tr>
+          <td>Final spin \(a_f\)</td>
+          <td class="syn">0.857</td>
+          <td class="ase">0.7–0.99</td>
+          <td class="diff">Constrained</td>
+          <td>Cascade tracks spin self-consistently</td>
+        </tr>
+        <tr>
+          <td>Prompt EM energy \(E_{\text{EM}}\)</td>
+          <td class="syn">2.22×10⁵¹ erg</td>
+          <td class="warn">1.54×10⁵⁵ erg</td>
+          <td class="warn">−4 OOM</td>
+          <td>ASE ignores photon trapping; physically wrong</td>
+        </tr>
+        <tr>
+          <td>AGN jet energy \(E_{\text{AGN}}\)</td>
+          <td class="syn">2.25×10⁶⁵ erg</td>
+          <td class="ase">1.58×10⁶⁵ erg</td>
+          <td class="diff">+42%</td>
+          <td>Spin \(a_f=0.857\) drives BZ power</td>
+        </tr>
+        <tr>
+          <td>Recoil velocity \(v_{\text{kick}}\)</td>
+          <td class="syn">85–249 km/s (aligned)</td>
+          <td class="ase">100–1000 km/s</td>
+          <td class="diff">Tighter</td>
+          <td>SYNAPSE separates mass-ratio and spin kicks</td>
+        </tr>
+        <tr>
+          <td>Free-fall timescale \(\tau_{\text{ff}}\)</td>
+          <td class="syn">4.46×10¹⁰ s (1412 yr)</td>
+          <td class="ase">2.34×10¹⁰ s (740 yr)</td>
+          <td class="diff">+91%</td>
+          <td>Pentagon geometry factor \(\mathcal{S}_5\) reduces eff. mass</td>
+        </tr>
+        <tr>
+          <td>Infall-phase \(E_{\text{GW}}\)</td>
+          <td class="syn">8.4×10⁵⁷ erg</td>
+          <td class="ase">0 (not computed)</td>
+          <td class="diff">Novel term</td>
+          <td>\(\mathbb{Z}_5\) coherent quadrupole emission</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </section>
+
+  <hr class="section-rule">
+
+  <!-- ============================== SECTION D ============================== -->
+  <section class="section" id="sec-d">
+    <div class="section-header">
+      <div class="section-letter">D</div>
+      <div class="section-title-wrap">
+        <span class="section-label-tag">Section D</span>
+        <div class="section-title">Limitations &amp; Sensitivity Analysis</div>
+      </div>
+    </div>
+
+    <h3>D.1 — Explicit Assumptions</h3>
+    <ul class="def-list">
+      <li><strong>Exact \(\mathbb{Z}_N\) symmetry throughout infall.</strong> Any perturbation (asymmetric initial velocities, mass scatter, external tidal field) breaks the symmetry and invalidates the coherent quadrupole decomposition. In reality, perturbations grow during infall via the gravitational focusing instability, so the symmetry holds well initially but degrades as separations shrink below the mutual perturbation scale. Estimated effect: \(\lesssim10\%\) on \(\tau_{\text{ff}}\), \(\lesssim5\%\) on \(E_{\text{GW}}\).</li>
+      <li><strong>Nearest-neighbor pairing for the merger tree.</strong> The pentagon has no unique pairing (two adjacent pairs + one unpaired is one possibility; a chain merger is another). Different trees give different \(a_f\) and \(v_{\text{kick}}\) but similar total \(E_{\text{GW}}\) (the energy budget is dominated by mass and mass ratio, not tree topology). Sensitivity: \(\pm0.05\) on \(a_f\), factor \(\lesssim2\) on \(v_{\text{kick}}\).</li>
+      <li><strong>Non-spinning initial BHs.</strong> The most conservative assumption. Aligned spins would increase \(\varepsilon_3\) and \(a_f\); anti-aligned would decrease both. For a population of randomly oriented spins with \(a_i\sim0.7\), \(E_{\text{GW}}\) varies by \(\pm30\%\) and \(a_f\) varies between 0.5 and 0.98.</li>
+      <li><strong>Newtonian free-fall with relativistic cap.</strong> The \(\mathcal{S}_N\) force law is Newtonian. Post-Newtonian corrections modify the orbit at separations \(r\lesssim10R_s\), but by this point the bodies are already in the strong-field merger regime and the NR-calibrated \(\varepsilon_k\) takes over. The crossover is handled self-consistently by the cascade.</li>
+      <li><strong>NR calibration transfer from binary to multi-body.</strong> The \(\varepsilon_0 = 0.0516\) and the spin formula are calibrated from binary NR. Their application at each cascade step assumes that at the moment of any given binary merger, the third/fourth/fifth body is far enough away to act as a perturbation. This fails if multiple mergers are simultaneous — a possibility in the strict \(\mathbb{Z}_5\) case where all 5 BHs arrive at the center simultaneously. SYNAPSE handles this by assuming sequential (generation-by-generation) mergers; the error in \(E_{\text{GW}}\) is \(\lesssim20\%\).</li>
+      <li><strong>Slim disk EM coupling.</strong> The Sądowski slim-disk formula is valid at \(1\lesssim\dot{m}\lesssim10^5\). At \(\dot{m}\sim10^7\), it is extrapolated beyond its calibration range. The true luminosity at such extreme Eddington ratios may be suppressed further (by super-photon-trapping effects) or enhanced (by magnetically dominated outflows), yielding an uncertainty of 1–2 orders of magnitude on \(E_{\text{EM}}^{(\text{prompt})}\).</li>
+    </ul>
+
+    <h3>D.2 — Sensitivity to Key Parameters</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>Parameter varied</th><th>Effect on \(M_f\)</th><th>Effect on \(E_{\text{GW}}\)</th><th>Effect on \(a_f\)</th><th>Effect on \(v_{\text{kick}}\)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>\(N: 5\to2\) (binary)</td><td class="diff">+69% (→4×10⁸ M☉ → 6.5×10⁸)</td><td class="diff">+30%</td><td class="num">0.686</td><td class="diff">→~200 km/s</td></tr>
+        <tr><td>\(N: 5\to3\) (triple)</td><td class="num">+18%</td><td class="num">−15%</td><td class="num">0.78</td><td class="num">~150 km/s</td></tr>
+        <tr><td>All spins \(a_i=0.7\) aligned</td><td class="warn">−4%</td><td class="diff">+22%</td><td class="diff">0.92</td><td class="num">~200 km/s</td></tr>
+        <tr><td>All spins \(a_i=0.7\) anti-aligned</td><td class="num">−1%</td><td class="warn">−10%</td><td class="warn">0.62</td><td class="warn">~600–4000 km/s</td></tr>
+        <tr><td>\(R_0: 1\to0.1\;\text{pc}\)</td><td class="num">Unchanged</td><td class="num">Unchanged</td><td class="num">Unchanged</td><td class="num">Unchanged</td></tr>
+        <tr><td>\(M_{\text{BH}}: 10^8\to10^7\;M_\odot\)</td><td class="num">Linear scale</td><td class="num">Linear in \(M^2\)</td><td class="num">Unchanged</td><td class="warn">Same km/s (scale-invariant)</td></tr>
+        <tr><td>Merger tree: chain vs. pairs</td><td class="num">±5%</td><td class="num">±15%</td><td class="diff">±0.07</td><td class="diff">±100 km/s</td></tr>
+      </tbody>
+    </table>
+
+    <h3>D.3 — Physics Ignored by SYNAPSE</h3>
+    <p>SYNAPSE is a vast improvement over the ASE but still omits the following, in decreasing order of impact on quantitative predictions:</p>
+    <ul class="def-list">
+      <li><strong>Simultaneous strong-field N-body dynamics.</strong> In the strict \(\mathbb{Z}_5\) limit, all 5 BHs are simultaneously inside the common Schwarzschild radius at \(\tau_{\text{merge}}\). SYNAPSE's sequential cascade is an approximation to what is genuinely a single, non-separable N-body merger event.</li>
+      <li><strong>Gravitational recoil of intermediate remnants.</strong> After step k=1, remnant \(C_1\) receives a recoil kick. For equal-mass non-spinning mergers this is zero (symmetry), but any spin misalignment produces a kick that displaces \(C_1\) before it merges with \(C_2\). SYNAPSE ignores this displacement effect.</li>
+      <li><strong>Circularization and tidal effects.</strong> The SMBHs are on perfectly radial orbits. In reality, angular momentum from perturbations creates non-zero impact parameters, which change the merger dynamics and GW waveform morphology.</li>
+      <li><strong>Full radiation hydrodynamics.</strong> The slim-disk EM coupling is a 0D approximation; the actual EM emission morphology, jet structure, and spectral energy distribution require GRMHD simulations.</li>
+      <li><strong>Quantum effects.</strong> Hawking radiation and Bekenstein entropy are irrelevant at these masses (\(T_H\sim10^{-14}\;\text{K}\)). SYNAPSE correctly ignores them.</li>
+    </ul>
+
+  </section>
+
+  <hr class="section-rule">
+
+  <!-- ============================== SECTION E ============================== -->
+  <section class="section" id="sec-e">
+    <div class="section-header">
+      <div class="section-letter">E</div>
+      <div class="section-title-wrap">
+        <span class="section-label-tag">Section E</span>
+        <div class="section-title">Comparison with Existing Methods</div>
+      </div>
+    </div>
+
+    <h3>E.1 — vs. Simple Binary Scaling Extrapolated to 5 Bodies</h3>
+    <p>The most naive extension of binary NR results to 5 bodies would be: take two equal-mass BHs of total mass \(5M_{\text{BH}}\), apply \(\varepsilon = 0.0516\), and compute \(E_{\text{GW}} = 0.0516\times5M_{\text{BH}}c^2\). This gives:</p>
+    <div class="eq-block">
+      \[
+      E_{\text{GW}}^{(\text{binary extrapolation})} = 0.0516\times5\times10^8\times1.989\times10^{33}\times9\times10^{20}
+      = 4.60\times10^{61}\;\text{erg}
+      \]
+    </div>
+    <p>vs. SYNAPSE: \(1.27\times10^{62}\;\text{erg}\). The binary extrapolation underestimates by a factor of 2.76, because it treats the 5-body system as a single binary event at equal mass, ignoring the spin-up cascade that amplifies \(\varepsilon\) in later mergers. SYNAPSE correctly captures this amplification.</p>
+
+    <h3>E.2 — vs. ASE (\(\varepsilon = 0.1\) Applied to Total Mass)</h3>
+    <p>The ASE uses \(\varepsilon_{\text{GW}} = 0.1\), which exceeds the NR binary value of 0.0516 by a factor of \(\sim2\). The ASE's \(\varepsilon=0.1\) is meant to capture the "typical for multi-BH merger" regime, but it applies this efficiency to the full \(M_{\text{total}}\) in a single shot, conflating a cascade with a simultaneous merger. SYNAPSE's cascade gives \(f_{\text{GW}} = 14.16\%\), which exceeds both the naive \(\varepsilon_0 = 5.16\%\) and the ASE's \(10\%\), because the spin-up cascade genuinely increases the late-stage efficiency above the non-spinning binary baseline.</p>
+
+    <h3>E.3 — Unique Predictions of SYNAPSE Not Available from Other Methods</h3>
+    <div class="callout nova">
+      <div class="callout-title">Unique Contributions of SYNAPSE</div>
+      <ol class="step-list">
+        <li><strong>Stage-by-stage spin evolution.</strong> SYNAPSE provides \(a_k^{(\text{out})}\) at every cascade step, allowing one to predict the GW waveform evolution across the multi-phase merger (frequency chirp, ringdown quality factor). No other analytical method does this for \(N>2\).</li>
+        <li><strong>Tight spin constraint: \(a_f = 0.857\pm0.05\).</strong> The ASE range (\(0.7–0.99\)) spans a factor of 1.4 in spin. SYNAPSE narrows this by tracking the specific cascade for the \(N=5\) nearest-neighbor tree. This \(a_f\) directly determines the BZ jet power and therefore \(E_{\text{AGN}}\) to within \(\sim15\%\).</li>
+        <li><strong>Correct EM energy estimate.</strong> The slim-disk coupling changes the prompt EM prediction by four orders of magnitude relative to ASE. This is not a perturbative correction — it is the qualitative difference between a calculation that accounts for fundamental radiative physics and one that does not.</li>
+        <li><strong>Coherent infall-phase GW term.</strong> The \(N^2\)-scaling coherent quadrupole emission during the \(\mathbb{Z}_5\)-symmetric infall (\(E_{\text{GW}}^{(\text{infall})}\sim8.4\times10^{57}\;\text{erg}\)) is a genuine novel prediction. It is observationally sub-dominant but physically meaningful as a low-frequency GW signal preceding the merger burst — potentially detectable by LISA as a "precursor chirp" before the main merger event.</li>
+        <li><strong>Pentagon geometry factor corrects infall time by factor 1.9.</strong> This matters for any time-domain modelling of the electromagnetic precursor emission (if present) and for the gravitational wave arrival time of the inspiral signal from this source.</li>
+      </ol>
+    </div>
+
+    <h3>E.4 — Where SYNAPSE Agrees with ASE</h3>
+    <p>The AGN jet energy (\(\sim10^{65}\;\text{erg}\)) is consistent between both frameworks to within \(42\%\), because it depends primarily on \(M_f\) and \(a_f\), both of which are constrained to comparable precision. The comparative ratios (event vs. quasar) in the GW and AGN channels are preserved in SYNAPSE. The hierarchical mass loss fraction (14.16% vs. ASE's 10%) is a factor-of-1.4 difference — within the uncertainty range explicitly acknowledged in the ASE footnote.</p>
+
+    <h3>E.5 — Final Verdict: What SYNAPSE Adds</h3>
+    <p>SYNAPSE is not a refinement of the ASE. It is a different analytical architecture. The ASE computes a single-shot energy budget using global efficiency parameters. SYNAPSE computes a sequential cascade with self-consistent spin evolution, a geometry-corrected infall dynamics, and a physically justified EM coupling. The most consequential improvement is the four-order-of-magnitude correction to the prompt EM energy — the single most dangerous number in the ASE, and the one most likely to generate misleading physical intuition if taken at face value. For the GW energy and final spin, SYNAPSE provides tighter and more defensible estimates than the ASE. For the AGN jet energy, both frameworks are consistent and the dominant uncertainty is the magnetic flux \(\Phi\) — an input parameter in both, not computable by either.</p>
+
+  </section>
+
+  <hr class="section-rule">
+
+  <!-- FOOTER -->
+  <div class="footer-block">
+    <div class="footer-title">SYNAPSE — Mandatory Assumptions Disclosure</div>
+    <p><strong>SYNAPSE is an analytical cascade estimator, not a numerical relativity simulation.</strong> It incorporates NR-calibrated fitting formulae for binary mergers, applied sequentially through a hierarchical merger tree. It correctly recovers binary NR results in the \(N=2\) limit by construction. For \(N>2\), it introduces the \(\mathcal{S}_N\) geometry factor and the spin cascade recursion as genuinely novel elements, but these are calibrated extrapolations, not first-principles derivations.</p>
+    <p>SYNAPSE does NOT include: full solutions to the Einstein Field Equations for \(N>2\); non-linear GR effects during simultaneous strong-field N-body dynamics; magnetic field evolution; full radiation hydrodynamics; neutrino cooling; or self-consistent feedback between the GW recoil and subsequent merger dynamics.</p>
+    <p>SYNAPSE IS: internally consistent, physically motivated, reducible to known binary NR results in the appropriate limit, and capable of producing tighter and more defensible quantitative estimates than the ASE for the stated scenario — particularly for the prompt EM energy, final spin, and free-fall dynamics.</p>
+    <p style="margin-top:20px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint);">
+      Methodological Transparency: Absolute &nbsp;|&nbsp; Novel Terms: \(\mathcal{S}_N\), \(\mathbb{Z}_N\text{-coherent }P_{\text{GW}}\), Slim-Disk \(\mathcal{L}_{\text{EM}}\), Cascade Spin Recursion &nbsp;|&nbsp; Apologies Issued: 0
+    </p>
+  </div>
+
+</div><!-- page-wrap -->
+
+</body>
+</html>

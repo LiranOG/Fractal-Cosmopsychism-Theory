@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrophysical Ultimate Estimator – Full Physics Integration</title>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['\\[','\\]']],
+    tags: 'ams',
+    packages: {'[+]': ['boldsymbol']}
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06070d;
+    --bg2: #0b0d18;
+    --bg3: #10131f;
+    --border: #1e2340;
+    --border-bright: #2d3360;
+    --accent: #4a7cff;
+    --accent2: #ff6b35;
+    --accent3: #b388ff;
+    --accent4: #00e5ff;
+    --warn: #ffb300;
+    --danger: #ff4040;
+    --text: #c8cfe8;
+    --text-dim: #7a829e;
+    --text-bright: #eef0fa;
+    --mono: 'Space Mono', monospace;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --display: 'DM Serif Display', Georgia, serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+
+  /* === STARFIELD CANVAS === */
+  #starfield {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+  }
+
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px 120px;
+  }
+
+  /* === HEADER === */
+  .site-header {
+    text-align: center;
+    padding: 80px 0 56px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 64px;
+  }
+  .header-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 14px;
+    margin-bottom: 28px;
+    opacity: 0.8;
+  }
+  .site-header h1 {
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 48px);
+    color: var(--text-bright);
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 18px;
+  }
+  .site-header h1 em {
+    font-style: italic;
+    color: var(--accent3);
+  }
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* === SECTION HEADINGS === */
+  .section {
+    margin-bottom: 80px;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section h2 {
+    font-family: var(--display);
+    font-size: clamp(22px, 3vw, 32px);
+    color: var(--text-bright);
+    margin-bottom: 28px;
+    line-height: 1.2;
+  }
+  .section h3 {
+    font-family: var(--display);
+    font-size: 22px;
+    color: var(--accent3);
+    margin: 36px 0 16px;
+  }
+  .section h4 {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--accent4);
+    margin: 28px 0 12px;
+    text-transform: uppercase;
+  }
+
+  p {
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+
+  /* === MATH BLOCKS === */
+  .math-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin: 28px 0;
+    border-radius: 2px;
+    overflow-x: auto;
+    font-size: 15px;
+  }
+  .math-block.gw { border-left-color: var(--accent3); }
+  .math-block.warn { border-left-color: var(--warn); }
+  .math-block.danger { border-left-color: var(--danger); }
+  .math-block.alt { border-left-color: var(--accent4); }
+
+  /* === CALLOUT BOXES === */
+  .callout {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    background: var(--bg2);
+  }
+  .callout.ase { border-color: var(--accent); }
+  .callout.warn { border-color: var(--warn); background: rgba(255,179,0,0.04); }
+  .callout.danger { border-color: var(--danger); background: rgba(255,64,64,0.04); }
+  .callout.info { border-color: var(--accent4); background: rgba(0,229,255,0.04); }
+  .callout.alt { border-color: var(--accent3); background: rgba(179,136,255,0.04); }
+  .callout-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .callout.ase .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--warn); }
+  .callout.danger .callout-title { color: var(--danger); }
+  .callout.info .callout-title { color: var(--accent4); }
+  .callout.alt .callout-title { color: var(--accent3); }
+
+  /* === LISTS === */
+  ul.physics-list, ol.physics-list {
+    padding-left: 24px;
+    margin-bottom: 18px;
+  }
+  ul.physics-list li, ol.physics-list li {
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  ul.physics-list li::marker { color: var(--accent); }
+  ol.physics-list li::marker { color: var(--accent); font-family: var(--mono); font-size: 13px; }
+
+  .cross-list li::before { content: '✗ '; color: var(--danger); }
+  .cross-list { list-style: none; padding-left: 0; }
+  .warn-list li::before { content: '⚠ '; color: var(--warn); }
+  .warn-list { list-style: none; padding-left: 0; }
+  .check-list li::before { content: '✓ '; color: #4caf50; }
+  .check-list { list-style: none; padding-left: 0; }
+
+  /* === TABLE === */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 28px 0;
+    font-size: 14px;
+  }
+  .data-table th {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-bright);
+    padding: 10px 16px;
+    text-align: left;
+    background: var(--bg3);
+  }
+  .data-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  .data-table tr:hover td { background: var(--bg3); }
+  .data-table td.val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent4);
+  }
+  .data-table td.ase { color: var(--accent2); font-family: var(--mono); font-size: 13px; }
+  .data-table td.gr { color: var(--accent3); font-family: var(--mono); font-size: 13px; }
+  .data-table td.nr { color: #4caf50; font-family: var(--mono); font-size: 13px; }
+
+  /* === MONOSPACE INLINE === */
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent4);
+    background: rgba(0,229,255,0.07);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  /* === FOOTER === */
+  .ase-footer {
+    margin-top: 80px;
+    border: 1px solid var(--danger);
+    border-radius: 2px;
+    padding: 32px 36px;
+    background: rgba(255,64,64,0.04);
+  }
+  .ase-footer-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--danger);
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  .ase-footer p { font-size: 15px; color: var(--text-dim); margin-bottom: 12px; }
+  .integrity-line {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 24px;
+    display: flex;
+    gap: 32px;
+  }
+  .integrity-line span { color: var(--accent4); }
+
+  /* === DIVIDER === */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 64px 0;
+  }
+
+  /* === TOC === */
+  .toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 28px 32px;
+    margin-bottom: 64px;
+    border-radius: 2px;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .toc a {
+    display: block;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 4px 0;
+    font-family: var(--serif);
+    font-size: 15px;
+    transition: color 0.15s;
+    border-bottom: 1px solid transparent;
+  }
+  .toc a:hover { color: var(--accent); }
+  .toc a .toc-letter {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent2);
+    margin-right: 10px;
+    font-weight: 700;
+  }
+
+  /* === SCENARIO CARDS === */
+  .scenario-card {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    background: var(--bg2);
+    border-top: 3px solid var(--accent3);
+  }
+  .scenario-card h4 {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--text-bright);
+    margin-bottom: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 600px) {
+    .page-wrap { padding: 0 16px 80px; }
+    .math-block { padding: 16px; font-size: 13px; }
+    .data-table { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-badge">AUE — Full Physics Integration</div>
+    <h1>Astrophysical Ultimate Estimator<br><em>Unified Formula + Physics Upgrade Stack</em></h1>
+    <div class="header-sub">ASE → GR → NR → GRMHD &nbsp;|&nbsp; 5 SMBH + 2 Ultra-Massive Stars &nbsp;|&nbsp; Simultaneous Radial Infall</div>
+  </header>
+
+  <!-- TABLE OF CONTENTS -->
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#sec-a"><span class="toc-letter">A.</span> Unified Formula (ASE-Level Calculation)</a>
+    <a href="#sec-b"><span class="toc-letter">B.</span> ASE Framework &amp; Limitations</a>
+    <a href="#sec-c"><span class="toc-letter">C.</span> Upgrade: General Relativity (Einstein Field Equations)</a>
+    <a href="#sec-d"><span class="toc-letter">D.</span> Upgrade: Numerical Simulation – Requirements &amp; Limits</a>
+    <a href="#sec-e"><span class="toc-letter">E.</span> Upgrade: Full Hydrodynamics (MHD + Radiation + Microphysics)</a>
+    <a href="#sec-f"><span class="toc-letter">F.</span> Alternative Scenarios: Computable with Full Physics</a>
+    <a href="#sec-g"><span class="toc-letter">G.</span> Comparison: ASE vs. Full Physics – What Changes?</a>
+    <a href="#sec-h"><span class="toc-letter">H.</span> Final Unified Summary</a>
+    <a href="#sec-i"><span class="toc-letter">I.</span> ASE Mandatory Footer</a>
+  </nav>
+
+  <!-- ========== SECTION A ========== -->
+  <section class="section" id="sec-a">
+    <div class="section-label">Section A</div>
+    <h2>Unified Formula (ASE-Level Calculation)</h2>
+
+    <p>Presented verbatim. No smoothing, no apology for the brutality of the numbers. Read carefully — each line is both a result and an admission of what was ignored to obtain it.</p>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{1. SYSTEM DEFINITION:} \\
+      &\quad M_{\text{BH}} = 10^8\,M_{\odot}, \quad N_{\text{BH}} = 5, \quad M_{*} = 20\times M_{R136a1} = 20\times 215\,M_{\odot} = 4300\,M_{\odot}, \quad N_{*} = 2 \\
+      &\quad R_{*} = 500\,R_{\odot} = 3.4785\times10^{13}\,\text{cm} \\
+      &\quad R_{s,\text{BH}} = \frac{2GM_{\text{BH}}}{c^2} \approx 2.953\times10^{13}\,\text{cm} \\
+      &\quad R_0 = 1\,\text{pc} = 3.0857\times10^{18}\,\text{cm} \\
+      &\quad M_{\text{total}} = 5\times10^8\,M_{\odot} + 8600\,M_{\odot} \approx 5\times10^8\,M_{\odot}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{2. IMPACT VELOCITY (FREE FALL):} \\
+      &\quad v_{\text{imp}} = \sqrt{\frac{2GM_{\text{total}}}{R_0}}
+        = \sqrt{\frac{2\times6.67430\times10^{-8}\times(5\times10^8\times1.9885\times10^{33})}{3.0857\times10^{18}}}
+        \approx 2.9979\times10^9\,\text{cm/s} = 0.1c
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{3. STAR–SMBH INTERACTION (PER BH):} \\
+      &\quad \Delta t_{\text{acc}} = \frac{2R_{*}}{v_{\text{imp}}} \approx 2.32\times10^4\,\text{s} \quad (\sim6.44\,\text{hours}) \\
+      &\quad \dot{M}_{\text{acc}} = \frac{M_{*}}{\Delta t_{\text{acc}}} \approx 3.68\times10^{32}\,\text{g/s} \approx 1.85\times10^{-4}\,M_{\odot}/\text{s} \\
+      &\quad L_{\text{Edd}} = 1.26\times10^{47}\,\text{erg/s}\quad (M_{\text{BH}}=10^8 M_\odot) \\
+      &\quad \dot{M}_{\text{Edd}} \approx 1.40\times10^{26}\,\text{g/s} \approx 7.04\times10^{-8}\,M_{\odot}/\text{s} \\
+      &\quad \frac{\dot{M}_{\text{acc}}}{\dot{M}_{\text{Edd}}} \approx 2.63\times10^6 \quad (\text{Super-Eddington factor} \sim 2.6\times10^6) \\
+      &\quad E_{\text{grav,BH-}*} = \frac{GM_{\text{BH}}M_{*}}{R_{*}} \approx 1.27\times10^{59}\,\text{erg}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{4. COALESCENCE OF THE 5 SMBHs:} \\
+      &\quad R_{s,\text{total}} = \frac{2G(N_{\text{BH}}M_{\text{BH}})}{c^2} \approx 1.4765\times10^{14}\,\text{cm} \\
+      &\quad d_{\text{BH-BH}} \sim R_{*} = 3.4785\times10^{13}\,\text{cm} < R_{s,\text{total}} \Rightarrow \text{All within common horizon} \\
+      &\quad \tau_{\text{merge}} \sim \frac{R_{s,\text{total}}}{c} \approx 4.925\times10^3\,\text{s} \quad (\sim1.37\,\text{hours}) \\
+      &\quad \tau_{\text{merge}} \ll \Delta t_{\text{acc}} \Rightarrow \text{SMBHs merge before stars are fully accreted}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block gw">
+      \[
+      \begin{aligned}
+      &\textbf{5. GRAVITATIONAL WAVE (GW) EMISSION:} \\
+      &\quad E_{\text{GW}} = \epsilon_{\text{GW}}\,M_{\text{total}}\,c^2, \quad \epsilon_{\text{GW}}\sim0.1 \\
+      &\quad E_{\text{GW}} = 0.1\times9.9425\times10^{41}\times(2.9979\times10^{10})^2 \approx 8.93\times10^{63}\,\text{erg} \\
+      &\quad \tau_{\text{GW,peak}} \sim 0.01\,\frac{R_{s,\text{total}}}{c} \approx 49.25\,\text{s} \\
+      &\quad P_{\text{GW,peak}} \sim \frac{8.93\times10^{63}}{49.25} \approx 1.81\times10^{62}\,\text{erg/s}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{6. ELECTROMAGNETIC (EM) BURST FROM STELLAR MATERIAL:} \\
+      &\quad M_{*,\text{total}} = 2\times4300\,M_{\odot} = 8600\,M_{\odot} = 1.710\times10^{37}\,\text{g} \\
+      &\quad \eta_{\text{EM,burst}} \sim 10^{-3} \\
+      &\quad E_{\text{EM,burst}} = \eta_{\text{EM,burst}}\,M_{*,\text{total}}\,c^2 \approx 1.54\times10^{55}\,\text{erg} \\
+      &\quad \Delta t_{\text{GRB}} \sim 10\,\text{s} \Rightarrow P_{\text{EM,burst,peak}} \approx 1.54\times10^{54}\,\text{erg/s}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{7. POST-MERGER AGN ACTIVITY:} \\
+      &\quad M_{\text{final}} \approx 4.9\times10^8\,M_{\odot}, \quad a_{\text{final}} \sim 0.7–0.99 \\
+      &\quad \Phi \sim 10^{30}\,\text{G·cm}^2 \quad (\text{magnetic flux, MAD regime}) \\
+      &\quad \Omega_H = \frac{ac}{2R_s}, \quad P_{\text{jet}} = \frac{\kappa}{4\pi}\,\Phi^2\,\Omega_H^2, \quad \kappa\sim0.05 \\
+      &\quad P_{\text{jet}} \sim 5\times10^{49}\,\text{erg/s} \\
+      &\quad \Delta t_{\text{AGN}} \sim 10^8\,\text{yr} = 3.15\times10^{15}\,\text{s} \\
+      &\quad E_{\text{EM,AGN}} \approx 1.58\times10^{65}\,\text{erg}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &\textbf{8. FINAL BLACK HOLE PROPERTIES:} \\
+      &\quad M_{\text{BH,final}} \approx 4.9\times10^8\,M_{\odot}, \quad R_{s,\text{final}} \approx 1.45\times10^{14}\,\text{cm} \approx 0.047\,\text{pc} \\
+      &\quad T_{\text{Hawking,final}} \approx 1.2\times10^{-14}\,\text{K} \quad (\text{negligible}) \\
+      &\quad v_{\text{recoil}} \sim 100–1000\,\text{km/s} \Rightarrow \text{possible ejection if } v_{\text{recoil}} > v_{\text{esc}} \sim 500\,\text{km/s}
+      \end{aligned}
+      \]
+    </div>
+
+    <div class="math-block warn">
+      \[
+      \begin{aligned}
+      &\textbf{9. COMPARATIVE SUMMARY:} \\
+      &\quad \frac{E_{\text{GW}}}{E_{\text{EM,quasar}}} \sim \frac{10^{64}}{10^{62}} \sim 10^2 \quad (\text{GW dominates by 2 orders}) \\
+      &\quad \frac{P_{\text{EM,burst}}}{L_{\text{quasar}}} \sim \frac{10^{54}}{10^{47}} \sim 10^7 \quad (\text{instantaneous burst, } 10^7\times \text{ brighter}) \\
+      &\quad \frac{E_{\text{EM,AGN}}}{E_{\text{quasar}}} \sim 10^3 \quad (\text{post-merger AGN, } 10^3\times \text{ more energetic}) \\
+      &\quad \frac{E_{\text{total}}}{E_{\text{quasar}}} \sim \frac{10^{64}+10^{55}+10^{65}}{10^{62}} \sim 10^3
+      \end{aligned}
+      \]
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION B ========== -->
+  <section class="section" id="sec-b">
+    <div class="section-label">Section B</div>
+    <h2>Astrophysical Scale Estimator (ASE) — Framework &amp; Limitations</h2>
+
+    <h3>B.1 — What ASE IS</h3>
+    <p>The Astrophysical Scale Estimator is a methodological framework for analytical estimation of extreme events where no simulation is currently feasible and no observational data exists. It operates on four pillars:</p>
+    <ul class="physics-list">
+      <li><strong>Order-of-magnitude scaling</strong> using fundamental constants \((G, c, \hbar, k_B, \sigma_T)\) and macroscopic mass/length scales.</li>
+      <li><strong>Fundamental limit deployment:</strong> Eddington luminosity as a radiative ceiling, Schwarzschild radius as a geometric boundary, Hawking temperature as a quantum floor.</li>
+      <li><strong>Idealized symmetry:</strong> Spherical or axisymmetric geometries, uniform density distributions, aligned spins, simultaneous coalescence. In other words — assumptions chosen for tractability, not for physical realism.</li>
+      <li><strong>Energy inventory and relative comparison:</strong> The comparative ratios in Section 9 are the most defensible outputs of the ASE. The absolute values carry factor-of-a-few to order-of-magnitude uncertainty by design.</li>
+    </ul>
+
+    <div class="callout ase">
+      <div class="callout-title">ASE Valid Use Cases</div>
+      <p>Establishing whether an event is energetically plausible, determining which physical channel dominates the energy budget, flagging parameter regimes where known physics breaks down, and anchoring expectations before a full simulation is run.</p>
+    </div>
+
+    <h3>B.2 — What ASE IS NOT (Precision Disclaimer)</h3>
+    <p>Every one of the following omissions carries a potential correction factor ranging from \(10^{-2}\) to \(10^{+2}\) on the relevant quantity. Some are capable of changing the qualitative outcome of the scenario entirely.</p>
+
+    <ul class="cross-list">
+      <li><strong>Not a solution to the Einstein Field Equations.</strong> The spacetime metric during a 5-body SMBH merger is not Schwarzschild, not Kerr, not anything that has an analytic name. It is a dynamic, non-stationary, highly non-linear solution that does not exist in closed form and has never been numerically computed even for 3 bodies with comparable masses.</li>
+      <li><strong>Not a numerical simulation.</strong> No N-body dynamics, no geodesic integration, no GRMHD, no AMR grid, no radiative transfer solver, no neutrino transport.</li>
+      <li><strong>Not full hydrodynamics.</strong> The stellar material is treated as a ballistic point mass. There is no pressure gradient, no shock structure, no turbulence, no fragmentation, no outflow.</li>
+      <li><strong>Not self-consistent in the relativistic regime.</strong> A Newtonian free-fall velocity of \(0.1c\) is used in a context where the bodies are at separations of order their own Schwarzschild radii. At these scales, Newtonian gravity is an approximation accurate to perhaps \(50\%\) — at best.</li>
+      <li><strong>No feedback physics.</strong> Radiation pressure, magnetically driven outflows, and gravitational recoil all alter the accretion geometry on timescales shorter than \(\Delta t_{\text{acc}}\). The ASE ignores all of them by construction.</li>
+      <li><strong>No multi-body GR dynamics.</strong> The 5-SMBH system is treated as a single composite mass for gravitational wave estimation. In reality, the waveform morphology, total radiated energy, and final spin depend critically on the individual mass ratios, spin vectors, and orbital geometry of each binary pair in the hierarchical merger sequence.</li>
+      <li><strong>No magnetic field evolution.</strong> The magnetic flux \(\Phi\sim10^{30}\,\text{G·cm}^2\) in Section 7 is imposed as a static post-merger condition. In reality, fields are generated, amplified, destroyed, and restructured by the MRI, flux freezing, reconnection, and the BZ mechanism throughout the entire event duration.</li>
+      <li><strong>No microphysics.</strong> No equation of state for nuclear-density stellar material, no pair production, no neutrino cooling, no opacity evolution.</li>
+      <li><strong>No radiative transfer.</strong> The photon mean free path in hyper-accreting super-Eddington flows is much shorter than the system scale. The radiation field is not diffusive — it's trapped. The effective radiation efficiency \(\eta_{\text{EM}}\) used in ASE is a global average that cannot capture this.</li>
+    </ul>
+
+    <h3>B.3 — Systematic Weaknesses (Explicit Hierarchy)</h3>
+    <p>These are ranked by their likely impact on the final numbers, largest first:</p>
+    <ul class="warn-list">
+      <li><strong>Multi-body GR dynamics.</strong> The \(\epsilon_{\text{GW}}\sim0.1\) factor is calibrated from equal-mass binary mergers. For a 5-body system with arbitrary mass ratios and spin misalignment, the actual \(\epsilon_{\text{GW}}\) could easily be \(0.02–0.15\). That's a factor of \(\sim7\) on \(E_{\text{GW}}\) — already an order of magnitude.</li>
+      <li><strong>Super-Eddington accretion physics.</strong> At \(\dot{M}/\dot{M}_{\text{Edd}}\sim2.6\times10^6\), the accretion flow is in the advection-dominated, photon-trapping regime (slim disk or thick disk). The actual luminosity is not \(10^6\times L_{\text{Edd}}\) — it saturates logarithmically due to photon trapping. The effective luminosity is closer to \(\sim10^{2}–10^{3}\times L_{\text{Edd}}\) in the slim-disk model. This changes \(E_{\text{EM,burst}}\) by potentially \(3–4\) orders of magnitude downward.</li>
+      <li><strong>Merger geometry.</strong> "Simultaneous radial infall with no prior interactions" is not a dynamically achievable configuration. Five SMBHs falling toward a common center from 1 pc will interact gravitationally long before they reach separations of order \(R_*\). The actual merger sequence is a cascading binary hierarchy. The ASE ignores this entirely.</li>
+      <li><strong>Stellar disruption vs. accretion.</strong> The assumption that a star is cleanly accreted over \(\Delta t_{\text{acc}}\) ignores the tidal disruption radius \(R_T = R_* (M_{\text{BH}}/M_*)^{1/3}\). For \(M_{\text{BH}}=10^8 M_\odot\), \(M_*=4300 M_\odot\), \(R_*\sim R_s\), we get \(R_T\sim R_*(10^8/4300)^{1/3}\sim18\,R_*\). The star is disrupted before it crosses \(R_s\). The resulting accretion stream fallback time — not \(\Delta t_{\text{acc}} = 2R_*/v\) — governs the EM energy release.</li>
+      <li><strong>Recoil velocity uncertainty.</strong> The \(100–1000\,\text{km/s}\) recoil range spans an order of magnitude. Near the upper end, the merged SMBH is ejected from a typical galaxy halo. This matters not just for Section 8 but for the entire post-merger AGN scenario in Section 7 — a recoiling BH can lose its accretion disk.</li>
+    </ul>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION C ========== -->
+  <section class="section" id="sec-c">
+    <div class="section-label">Section C</div>
+    <h2>Upgrade: General Relativity (Einstein Field Equations)</h2>
+
+    <p>This section applies GR corrections where the mathematics permits it — which is partially, and with significant caveats. We will go as far as the formalism allows and then state, without softening, where it stops.</p>
+
+    <h3>C.1 — GR Correction to Infall Velocity</h3>
+    <p>The ASE uses Newtonian free-fall: \(v_{\text{imp}} = \sqrt{2GM/R}\). For a test particle falling radially into a Schwarzschild spacetime, the locally measured radial velocity as a function of Schwarzschild coordinate \(r\) is:</p>
+    <div class="math-block">
+      \[
+      v_{\text{GR}}(r) = c\sqrt{\frac{R_s}{r}\left(1 - \frac{R_s}{r}\right)}
+      \]
+    </div>
+    <p>This reaches a maximum at \(r = 3R_s/2\) of \(v_{\text{max}} = c\sqrt{4/27} \approx 0.385c\). It then decreases to zero as \(r\to R_s\) in coordinate time — but the infalling observer crosses \(r = R_s\) in finite proper time. The ASE velocity of \(0.1c\) corresponds to \(r/R_s = 1/(0.1)^2 \cdot (1 - R_s/r) \approx 100\,R_s\) at leading order, which is formally in the weak-field regime. The correction at \(R_0=1\,\text{pc}\) relative to Newtonian is small (\(\lesssim 1\%\)).</p>
+    <p>However, the ASE then applies this velocity at \(d_{\text{BH-BH}}\sim R_*\sim R_s\). At separations of order \(R_s\), the Newtonian approximation is not a small correction — it is the wrong framework entirely. The effective potential for a Schwarzschild geodesic is:</p>
+    <div class="math-block">
+      \[
+      V_{\text{eff}}(r) = \frac{c^2}{2}\left(1 - \frac{R_s}{r}\right)\left(1 + \frac{L^2}{r^2 c^2}\right) - \frac{c^2}{2}
+      \]
+    </div>
+    <p>where \(L\) is the specific angular momentum. For radial infall (\(L=0\)) with the bodies at \(r\sim R_s\), the coordinate velocity goes to zero while the proper velocity remains finite — a distinction the ASE makes no provision for.</p>
+
+    <h3>C.2 — GR Correction to the Merger Timescale</h3>
+    <p>For a circular binary of total mass \(M\) and mass ratio \(q = m_1/m_2\), the post-Newtonian (2.5PN) Peters formula gives the inspiral timescale due to gravitational wave emission:</p>
+    <div class="math-block">
+      \[
+      \tau_{\text{Peters}} = \frac{12}{19}\frac{c_0^4}{\beta}\int_0^{e_0}\frac{e^{29/19}(1+\frac{121}{304}e^2)^{1181/2299}}{(1-e^2)^{3/2}}\,de
+      \]
+    </div>
+    <p>with \(\beta = \frac{64}{5}\frac{G^3 m_1 m_2(m_1+m_2)}{c^5}\) and \(c_0\) the initial orbital separation parameter. For a circular equal-mass binary at initial separation \(a_0\):</p>
+    <div class="math-block">
+      \[
+      \tau_{\text{GW}} = \frac{12}{19}\frac{a_0^4}{\beta} \approx \frac{5c^5 a_0^4}{256 G^3 \mu M^2}
+      \]
+    </div>
+    <p>where \(\mu = m_1 m_2/M\) is the reduced mass. For \(m_1=m_2=10^8 M_\odot\) starting at \(a_0 \sim R_s\approx 3\times10^{13}\,\text{cm}\):</p>
+    <div class="math-block">
+      \[
+      \tau_{\text{GW}} \approx \frac{5\,(2.998\times10^{10})^5\,(3\times10^{13})^4}{256\,(6.674\times10^{-8})^3\,(10^8\times1.989\times10^{33}/2)\,(2\times10^8\times1.989\times10^{33})^2}
+      \approx 10^3\,\text{s}
+      \]
+    </div>
+    <p>This is consistent with — but not identical to — the ASE estimate of \(\tau_{\text{merge}}\sim R_s/c\approx5\times10^3\,\text{s}\). The PN formula breaks down at separations \(a\lesssim 10\,R_s\), so this is an over-application of PN theory. The true merger timescale for bodies already deep in the strong-field regime requires numerical relativity. The ASE number is plausibly correct to within a factor of \(\sim5\).</p>
+
+    <h3>C.3 — GR Correction to Gravitational Wave Energy: Quadrupole Luminosity</h3>
+    <p>The quadrupole formula (leading-order GR radiation) gives the instantaneous GW power:</p>
+    <div class="math-block gw">
+      \[
+      P_{\text{GW}} = \frac{G}{5c^5}\left\langle\dddot{I}_{ij}\dddot{I}_{ij}\right\rangle
+      \]
+    </div>
+    <p>where \(I_{ij} = \int \rho\left(x_i x_j - \frac{1}{3}\delta_{ij}r^2\right)\,d^3x\) is the reduced quadrupole moment tensor. For a circular binary with separation \(a\) and orbital frequency \(\Omega\):</p>
+    <div class="math-block gw">
+      \[
+      P_{\text{GW}} = \frac{32}{5}\frac{G^4\mu^2 M^3}{c^5 a^5}
+      \]
+    </div>
+    <p>For our equal-mass pair at \(a = R_s\approx3\times10^{13}\,\text{cm}\), using \(\mu = M/4\), \(M = 2\times10^8 M_\odot\):</p>
+    <div class="math-block gw">
+      \[
+      P_{\text{GW}} = \frac{32}{5}\frac{(6.674\times10^{-8})^4\,(M/4)^2\,M^3}{(3\times10^{10})^5\,(3\times10^{13})^5}
+      \approx 10^{59}\,\text{erg/s}
+      \]
+    </div>
+    <p>This is below the ASE estimate of \(P_{\text{GW,peak}}\sim1.81\times10^{62}\,\text{erg/s}\) by 3 orders of magnitude. The discrepancy arises because the quadrupole formula is valid only for \(a\gg R_s\) — in the merger phase at \(a\sim R_s\), higher-order PN terms and merger/ringdown contributions dominate, and only numerical relativity captures the actual peak power. The quadrupole formula is, ironically, the most rigorous available analytical tool and it under-estimates the peak power because it is invalid precisely in the region where the peak occurs.</p>
+    <p>For multi-body systems (5 SMBHs), the quadrupole tensor becomes a superposition over all pairs:</p>
+    <div class="math-block gw">
+      \[
+      I_{ij}^{\text{total}} = \sum_{a=1}^{N} m_a\left(x_i^{(a)} x_j^{(a)} - \frac{1}{3}\delta_{ij}r_a^2\right)
+      \]
+    </div>
+    <p>The total power is not simply the sum of pairwise powers — there are cross-terms, interference effects between different binary pairs, and geometric factors that depend on the orbital plane orientations. For a simultaneous 5-body infall with no common orbital plane, the interference can be constructive or destructive. The ASE assumes maximum constructive addition, which is a best-case scenario for \(E_{\text{GW}}\).</p>
+
+    <h3>C.4 — Kerr Metric and Spinning SMBH Horizons</h3>
+    <p>Each SMBH is assumed to carry a dimensionless spin parameter \(a_* = Jc/(GM^2)\). The Kerr metric horizon radii are:</p>
+    <div class="math-block">
+      \[
+      r_\pm = \frac{GM}{c^2}\left(1 \pm \sqrt{1 - a_*^2}\right)
+      \]
+    </div>
+    <p>For \(a_*\to1\) (maximal Kerr), \(r_+ \to GM/c^2 = R_s/2\). The ISCO radius, which governs accretion efficiency, shifts from \(6GM/c^2\) (Schwarzschild) to \(GM/c^2\) (prograde, maximal Kerr), changing \(\eta\) from \(0.06\) to \(0.42\). The ASE uses \(\eta=0.1\) — defensible only as a population average. For maximal Kerr, the EM burst energy \(E_{\text{EM,burst}}\) could increase by factor \(\sim4\). For retrograde accretion, \(\eta\sim0.04\) and the factor goes the other way.</p>
+
+    <h3>C.5 — What Cannot Be Done Analytically</h3>
+    <div class="callout danger">
+      <div class="callout-title">Hard Limits of Analytical GR</div>
+      <ul class="cross-list">
+        <li><strong>5-body merger spacetime.</strong> No closed-form solution to the EFE exists for more than 2 bodies in the strong-field regime. This is not a gap in current knowledge — it is a theorem. The EFE are non-linear; superposition fails.</li>
+        <li><strong>Spin-orbit coupling and precession.</strong> Misaligned spins in a multi-body BH system produce orbital precession, frame dragging, and spin-flip effects. These are captured at 3.5PN in analytical approximations, but break down entirely at \(a\lesssim10R_s\).</li>
+        <li><strong>Gravitational recoil kick.</strong> The recoil velocity depends on the final-cycle symmetry breaking in the GW emission. It requires the full numerical waveform. The \(100–1000\,\text{km/s}\) range in the ASE is a phenomenological fit from binary NR simulations — its extrapolation to 5 bodies is unvalidated.</li>
+        <li><strong>Ringdown.</strong> Post-merger the final Kerr BH undergoes quasi-normal mode (QNM) oscillation. The QNM frequencies are analytically known for Kerr: \(\omega_{\text{QNM}} = \omega_R + i\omega_I\) with \(\omega_R \propto c^3/(GM)\) and \(\omega_I\) the damping rate. But the amplitude and energy carried by the ringdown depend on the merger history and cannot be extracted without NR.</li>
+        <li><strong>GR hydrodynamics of stellar disruption.</strong> The interaction of a stellar envelope (\(\rho\sim10^{-5}\,\text{g/cm}^3\)) with a dynamic multi-SMBH spacetime requires the full general-relativistic Euler equations coupled to the EFE. No analytical solution exists.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION D ========== -->
+  <section class="section" id="sec-d">
+    <div class="section-label">Section D</div>
+    <h2>Upgrade: Numerical Simulation — Requirements &amp; Limits</h2>
+
+    <h3>D.1 — What a Full Simulation of This Scenario Would Require</h3>
+
+    <h4>Baseline Code Architecture</h4>
+    <p>A simulation of the full scenario (5 SMBH + 2 ultra-massive stars, strong-field GR regime) would require a code stack that does not yet exist as a single integrated tool. The necessary components are:</p>
+    <ul class="physics-list">
+      <li><strong>Numerical Relativity (NR) core:</strong> BSSN or CCZ4 formulation of the EFE, typically with the moving puncture method. Current production codes: SpEC, Einstein Toolkit (Cactus/McLachlan), GR-Hydro/GR-CHOMBO, BAM, CoRe. These handle up to 3-body BH mergers reliably; 5-body is an open research problem.</li>
+      <li><strong>GRMHD solver:</strong> Coupled to the NR metric evolution. Codes: Athena++ (with GR module), BHAC, Illinois GRMHD (embedded in Einstein Toolkit), HARM3D, GR-Hydro. These handle the plasma and stellar material evolution.</li>
+      <li><strong>Adaptive Mesh Refinement (AMR):</strong> The dynamic range of this problem spans stellar radii \(\sim3\times10^{13}\,\text{cm}\) down to sub-horizon scales \(\lesssim10^{11}\,\text{cm}\), all within a domain of \(\sim1\,\text{pc} = 3\times10^{18}\,\text{cm}\). That's a linear dynamic range of \(\sim10^7\), requiring at least \(7\) levels of factor-2 refinement — or equivalently, a fixed grid with \(\sim10^{21}\) cells. This is cosmological-simulation territory, not BH-merger territory.</li>
+      <li><strong>Radiation transport:</strong> Frequency-dependent (multi-group) Monte Carlo or discrete ordinates (\(S_N\)) method for the GRB photosphere and afterglow. M1 closure or two-moment schemes for the AGN disk radiation. Computational cost: \(\sim10–100\times\) the hydrodynamic cost.</li>
+      <li><strong>Neutrino transport:</strong> Required if central temperatures exceed \(T\gtrsim10^{10}\,\text{K}\). At \(\dot{M}\sim2\times10^{-4}\,M_\odot/\text{s}\), the inner accretion flow reaches \(T\sim10^{11}\,\text{K}\). Neutrino pair production and cooling are dominant. This requires a full Boltzmann solver for neutrino distribution functions — the same infrastructure used in core-collapse supernova codes.</li>
+      <li><strong>Moving mesh or Lagrangian stellar tracker:</strong> The stellar material needs to be resolved from its initial structure (\(\rho\sim10^{-5}\,\text{g/cm}^3\), \(R\sim R_*\)) through tidal disruption (density contrasts of \(\sim10^{10}\) from the outer envelope to the disrupted stream) to accretion disk formation. Standard Eulerian AMR codes handle this poorly; a hybrid Lagrangian-Eulerian approach (e.g., AREPO-style moving mesh) would be needed.</li>
+    </ul>
+
+    <h4>Grid Resolution Requirements</h4>
+    <div class="math-block warn">
+      \[
+      \begin{aligned}
+      &\text{Domain size: } L_{\text{domain}} = 1\,\text{pc} = 3\times10^{18}\,\text{cm} \\
+      &\text{Min. required resolution: } \Delta x_{\min} \sim 0.01\,R_s \sim 3\times10^{11}\,\text{cm} \\
+      &\text{Required cell count (uniform): } N_{\text{cells}} = \left(\frac{L_{\text{domain}}}{\Delta x_{\min}}\right)^3 = \left(\frac{3\times10^{18}}{3\times10^{11}}\right)^3 = (10^7)^3 = 10^{21} \\
+      &\text{At 8 bytes per primitive variable, 10 variables: } \text{Memory} \sim 10^{22}\,\text{bytes} = 10^{10}\,\text{TB}
+      \end{aligned}
+      \]
+    </div>
+    <p>Current state-of-the-art NR simulations use \(\sim10^8–10^9\) cells at peak refinement, with total memory of \(\sim10–100\,\text{TB}\). The required simulation exceeds this by \(10–12\) orders of magnitude on a uniform grid, even before accounting for the temporal evolution. AMR reduces this somewhat — but the refinement hierarchy required to cover both the 1-pc infall region and the sub-\(R_s\) horizon region simultaneously is beyond any planned exascale architecture.</p>
+
+    <h3>D.2 — Current State of the Art</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Scenario</th><th>Feasibility</th><th>Best Available Code</th><th>Limiting Factor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Binary BH merger (equal mass)</td>
+          <td class="nr">✓ Routine</td>
+          <td>SpEC, BAM, Einstein Toolkit</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Binary BH + circumbinary gas disk</td>
+          <td class="nr">✓ Possible</td>
+          <td>Illinois GRMHD, BHAC</td>
+          <td>Resolution near BH horizons</td>
+        </tr>
+        <tr>
+          <td>TDE: single SMBH + star (GRMHD)</td>
+          <td class="nr">✓ Possible</td>
+          <td>Athena++, BHAC, H-AMR</td>
+          <td>Stellar structure resolution</td>
+        </tr>
+        <tr>
+          <td>Triple BH merger (NR)</td>
+          <td class="ase">⚠ Frontier</td>
+          <td>Einstein Toolkit (active research)</td>
+          <td>Multi-body NR algorithms, runtime</td>
+        </tr>
+        <tr>
+          <td>Binary SMBH + TDE (GRMHD)</td>
+          <td class="ase">⚠ Frontier</td>
+          <td>Coupled NR+GRMHD (custom)</td>
+          <td>Dynamic range, coupling overhead</td>
+        </tr>
+        <tr>
+          <td>5-body SMBH merger (NR only)</td>
+          <td class="val">✗ Impossible</td>
+          <td>—</td>
+          <td>No algorithm, no hardware</td>
+        </tr>
+        <tr>
+          <td>5-body SMBH + 2 stars (full physics)</td>
+          <td class="val">✗ Impossible</td>
+          <td>—</td>
+          <td>10–12 OOM beyond any existing/planned system</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>D.3 — What Exascale and Future Architectures Could Achieve</h3>
+    <p>The U.S. Frontier system (Oak Ridge, ~1 exaFLOP sustained) and its successors into the 2030s may enable:</p>
+    <ul class="physics-list">
+      <li>3-body BH mergers with full GRMHD and radiation transport — by approximately 2030.</li>
+      <li>Binary SMBH merger + stellar disruption event with full GRMHD — by approximately 2028–2032.</li>
+      <li>4-body BH mergers without hydrodynamics — possibly by 2035, depending on algorithmic advances.</li>
+      <li>5-body BH merger with stars and full microphysics — not within any reasonable projection of current hardware scaling.</li>
+    </ul>
+    <p>The fundamental bottleneck is not simply compute throughput. It is the <em>algorithmic coupling</em> between the metric solver (NR), the hydrodynamic solver (GRMHD), the radiation transport, and the stellar structure — each operating on different spatial and temporal scales, requiring tight synchronization that cannot be parallelized away.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION E ========== -->
+  <section class="section" id="sec-e">
+    <div class="section-label">Section E</div>
+    <h2>Upgrade: Full Hydrodynamics (MHD + Radiation + Microphysics)</h2>
+
+    <h3>E.1 — Magnetohydrodynamics: The Induction Equation</h3>
+    <p>The ASE treats the magnetic flux \(\Phi\) as a fixed post-merger given. In reality, the magnetic field must be evolved self-consistently. The general relativistic induction equation is:</p>
+    <div class="math-block">
+      \[
+      \partial_\mu(\sqrt{-g}\,^*F^{\mu\nu}) = 0
+      \]
+    </div>
+    <p>where \(^*F^{\mu\nu} = \frac{1}{2}\epsilon^{\mu\nu\rho\sigma}F_{\rho\sigma}\) is the dual of the Faraday tensor and \(g = \det(g_{\mu\nu})\) is the metric determinant. In the 3+1 split, this reduces to the GRMHD induction equation for the magnetic field 3-vector \(\mathbf{B}\):</p>
+    <div class="math-block">
+      \[
+      \frac{\partial(\sqrt{\gamma}\,B^i)}{\partial t} = -\partial_j\left[\sqrt{\gamma}\left(\alpha v^i B^j - \alpha v^j B^i - \beta^i B^j + \beta^j B^i\right)\right]
+      \]
+    </div>
+    <p>where \(\alpha\) is the lapse, \(\beta^i\) the shift vector, \(\gamma\) the 3-metric determinant, and \(v^i\) the fluid 3-velocity. This couples the electromagnetic field to both the fluid motion and the spacetime metric — a system that cannot be decoupled without losing the essential physics.</p>
+
+    <h4>Magnetorotational Instability (MRI)</h4>
+    <p>In the forming post-merger accretion disk, the MRI amplifies weak seed fields exponentially. The MRI fastest-growing mode wavelength is:</p>
+    <div class="math-block">
+      \[
+      \lambda_{\text{MRI}} = 2\pi v_A / \Omega_K = 2\pi\frac{B/\sqrt{4\pi\rho}}{\sqrt{GM_{\text{BH}}/r^3}}
+      \]
+    </div>
+    <p>For \(B\sim10\,\text{G}\), \(\rho\sim10^{-3}\,\text{g/cm}^3\), \(r\sim10\,R_s\), this gives \(\lambda_{\text{MRI}}\sim10^{10}\,\text{cm}\), which is \(\sim0.003\,R_s\). Resolving the MRI requires grid spacing \(\lesssim\lambda_{\text{MRI}}/10\sim10^{9}\,\text{cm}\). This is the inner AMR resolution requirement that forces \(\Delta x_{\min}\) into the \(10^9–10^{11}\,\text{cm}\) range. Any simulation that does not resolve the MRI is using a sub-grid viscosity model — which is to say, it's parameterizing rather than computing the most important angular momentum transport process in the disk.</p>
+
+    <h3>E.2 — Radiation Transport</h3>
+    <p>The ASE assigns a global \(\eta_{\text{EM}}=10^{-3}\) to the EM burst. This number is arbitrary to within an order of magnitude. The correct approach is to solve the covariant radiative transfer equation:</p>
+    <div class="math-block">
+      \[
+      \frac{d\mathcal{I}_\nu}{d\lambda} = j_\nu - \kappa_\nu \mathcal{I}_\nu
+      \]
+    </div>
+    <p>where \(\mathcal{I}_\nu = I_\nu/\nu^3\) is the Lorentz-invariant specific intensity, \(\lambda\) is an affine parameter along the photon geodesic, \(j_\nu\) is the emissivity, and \(\kappa_\nu\) is the absorption opacity. In the super-Eddington regime relevant here, the photon mean free path:</p>
+    <div class="math-block">
+      \[
+      \ell_{\text{mfp}} = \frac{1}{\kappa_{\text{es}}\,\rho} = \frac{1}{0.34\,\rho}\,\text{cm}
+      \]
+    </div>
+    <p>At \(\rho\sim10^{-3}\,\text{g/cm}^3\) (inner accretion flow), \(\ell_{\text{mfp}}\sim3\,\text{cm}\) — nine orders of magnitude smaller than the system scale. Photons are trapped. The radiation diffuses outward on the thermal timescale, not the dynamical timescale. The actual radiated luminosity is determined by the photon diffusion equation through an optically thick medium, not by a fixed efficiency factor. In the slim-disk model (the appropriate analytical approximation for super-Eddington flows), the luminosity is:</p>
+    <div class="math-block warn">
+      \[
+      L_{\text{slim}} \approx L_{\text{Edd}}\left(1 + \ln\frac{\dot{M}}{\dot{M}_{\text{Edd}}}\right) \approx 1.26\times10^{47}\left(1 + \ln(2.6\times10^6)\right) \approx 1.26\times10^{47}\times15.8 \approx 2\times10^{48}\,\text{erg/s}
+      \]
+    </div>
+    <p>This is \(6.5\) orders of magnitude below what a naive \(\eta_{\text{EM}}\dot{M}c^2\) at the full super-Eddington rate would give, and about \(4.5\) orders of magnitude below the ASE EM burst power estimate. <em>This is the single largest quantitative discrepancy between ASE and real physics in this scenario.</em></p>
+
+    <h3>E.3 — Microphysics</h3>
+
+    <h4>Equation of State (EOS)</h4>
+    <p>The stellar material during disruption and accretion spans densities from \(\rho\sim10^{-5}\,\text{g/cm}^3\) (outer stellar envelope) to \(\rho\sim10^{8}\,\text{g/cm}^3\) (inner accretion disk near the ISCO). Across this range, four EOS regimes apply: ideal gas, radiation-dominated, degenerate electron pressure, and nuclear-density matter. Each requires a different EOS table. The ASE uses none — it assumes the material is a point mass with no internal pressure, which is an acceptable approximation only for the global energy budget and catastrophically wrong for the shock structure, jet launching, and EM emission morphology.</p>
+
+    <h4>Neutrino Physics</h4>
+    <p>At \(T\gtrsim5\times10^{10}\,\text{K}\) (reached in the inner accretion zone at these accretion rates), the dominant cooling channel is neutrino emission via pair annihilation and the URCA process:</p>
+    <div class="math-block">
+      \[
+      e^+ + e^- \to \nu_e + \bar{\nu}_e, \quad \dot{Q}_\nu \sim 10^{33}\left(\frac{T}{10^{10}\,\text{K}}\right)^9\,\text{erg/cm}^3/\text{s}
+      \]
+    </div>
+    <p>This cooling rate competes with the advective energy transport in the slim disk. The neutrino-cooled accretion flow (NCAF) is a distinct accretion regime — neither ADAF nor slim disk — relevant at \(\dot{M}\sim10^{-4}–1\,M_\odot/\text{s}\), precisely the range of this scenario. Neglecting neutrino cooling overestimates the disk temperature and therefore the thermally-driven outflow rates and EM emission.</p>
+
+    <h4>Pair Production and Magnetic Field Effects</h4>
+    <p>In the jet base, magnetic fields of order \(B\sim10^{8}–10^{10}\,\text{G}\) are expected. At field strengths \(B\gtrsim B_{\text{cr}} = m_e^2 c^3/(e\hbar) \approx 4.4\times10^{13}\,\text{G}\), quantum electrodynamic pair production from the vacuum becomes relevant (Schwinger mechanism). While likely not dominant here, the cyclotron and synchrotron emission from \(e^+e^-\) pairs in the jet is the primary source of the high-energy EM burst — and it requires tracking the pair plasma dynamics, not just the baryonic fluid.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION F ========== -->
+  <section class="section" id="sec-f">
+    <div class="section-label">Section F</div>
+    <h2>Alternative Scenarios: Computable with Full Physics</h2>
+    <p>The original scenario is intractable. These alternatives are chosen to preserve as much of the original physics as possible while remaining accessible to current or near-future numerical tools. They are listed in increasing order of computational difficulty.</p>
+
+    <div class="scenario-card">
+      <h4>Option A — Binary SMBH Merger with Single TDE (Current Frontier)</h4>
+      <p><strong>Setup:</strong> Two SMBHs of \(M_{\text{BH,1}} = M_{\text{BH,2}} = 10^6\,M_\odot\) (intermediate-mass BH regime, computationally favorable) on a circular inspiral orbit at initial separation \(a_0 = 50\,R_s\). A single star of \(M_* = 100\,M_\odot\), \(R_* = 50\,R_\odot\) on a parabolic orbit that brings it within the tidal disruption radius of the binary at the moment of closest approach. No circumbinary disk (simplification).</p>
+      <p><strong>Physics included:</strong></p>
+      <ul class="check-list">
+        <li>Full NR: binary BH metric evolution (BSSN + moving punctures)</li>
+        <li>GRMHD: stellar material, jet formation, magnetic field evolution</li>
+        <li>AMR: down to \(\sim0.01\,R_s \sim 10^{10}\,\text{cm}\); domain \(\sim10^{15}\,\text{cm}\); dynamic range \(\sim10^5\), feasible</li>
+        <li>M1 radiation closure for disk/jet EM emission</li>
+        <li>Polynomial or tabulated EOS for stellar material</li>
+      </ul>
+      <p><strong>Computational cost:</strong> \(\sim10^6–10^7\) CPU-hours on a current Tier-0 cluster. Within reach of a major allocation (XSEDE/ACCESS-class). Estimated runtime: 6–18 months.</p>
+      <p><strong>What this tells us vs. ASE:</strong> The GW waveform from the binary merger will differ from the ASE estimate by order-unity factors in phase and potentially factors of 2–3 in amplitude depending on mass ratio and spin alignment. The EM burst from the TDE will be dramatically restructured — instead of a simple \(\eta M_* c^2\) estimate, the output would be a time-resolved light curve showing disk formation delay (fallback timescale \(\tau_{\text{fb}}\propto M_*^{-1}M_{\text{BH}}^{1/3}\)), flare morphology, and potentially a relativistic jet. The effective \(\eta_{\text{EM}}\) will be self-consistently determined by the simulation — expected in the range \(10^{-4}–10^{-2}\), consistent with the ASE assumption but with actual spectral and temporal structure.</p>
+    </div>
+
+    <div class="scenario-card">
+      <h4>Option B — Single SMBH TDE with Ultra-Massive Star (Near-Current Capability)</h4>
+      <p><strong>Setup:</strong> A single \(M_{\text{BH}} = 10^7\,M_\odot\) Kerr SMBH (spin \(a_* = 0.9\)) with a disrupting star of \(M_* = 1000\,M_\odot\), \(R_* = 200\,R_\odot\) on a parabolic orbit. Tidal disruption radius:</p>
+      <div class="math-block alt">
+        \[
+        R_T = R_*\left(\frac{M_{\text{BH}}}{M_*}\right)^{1/3} = 200\,R_\odot \times (10^4)^{1/3} \approx 4600\,R_\odot \approx 3.2\times10^{13}\,\text{cm} \sim R_s
+        \]
+      </div>
+      <p>This is a "direct plunge" regime (\(R_T \lesssim R_s\)), meaning the star is not fully tidally disrupted in the classical sense — it's compressed and partially swallowed. This is the most extreme TDE class and also the most computationally demanding within the single-BH framework.</p>
+      <p><strong>Physics included:</strong></p>
+      <ul class="check-list">
+        <li>Fixed Kerr background metric (no NR needed — the BH mass ratio favors the test-star approximation)</li>
+        <li>Full GRMHD for stellar material evolution</li>
+        <li>AMR: domain \(\sim10^{14}\,\text{cm}\), min resolution \(\sim10^{10}\,\text{cm}\), dynamic range \(\sim10^4\). Achievable with H-AMR or Athena++.</li>
+        <li>Neutrino leakage scheme (temperatures will reach \(10^{10}–10^{11}\,\text{K}\))</li>
+        <li>Full magnetic field evolution from seed field in the star</li>
+      </ul>
+      <p><strong>Computational cost:</strong> \(\sim10^5–10^6\) CPU-hours. Achievable on national cluster allocations today. This type of simulation (standard TDE with lower stellar mass) has already been published; scaling to higher \(M_*\) requires additional resolution levels.</p>
+      <p><strong>What this tells us vs. ASE:</strong> The fallback accretion rate \(\dot{M}_{\text{fb}}\) will follow a \(t^{-5/3}\) power law at late times (Rees 1988) rather than the instantaneous impactor model used in ASE. The peak rate occurs at the fallback timescale:</p>
+      <div class="math-block alt">
+        \[
+        t_{\text{fb}} = 2\pi\left(\frac{a_{\text{fb}}^3}{GM_{\text{BH}}}\right)^{1/2} \approx 2\pi\left(\frac{R_T^3}{GM_{\text{BH}}}\right)^{1/2} \approx 4\times10^7\,\text{s} \approx 1.3\,\text{yr}
+        \]
+      </div>
+      <p>The accretion event is stretched over years, not hours. Peak \(\dot{M}\) is lower than the ASE estimate by a factor \(\sim(t_{\text{fb}}/\Delta t_{\text{acc}})^{-1}\sim10^3\). The EM energy is the same in total, but the power is \(10^3\times\) lower and the duration \(10^3\times\) longer.</p>
+    </div>
+
+    <div class="scenario-card">
+      <h4>Option C — Triple SMBH Merger Without Stars (NR Frontier)</h4>
+      <p><strong>Setup:</strong> Three equal-mass SMBHs of \(M_{\text{BH}} = 10^6\,M_\odot\) each, initially in a hierarchical configuration: an inner binary at separation \(a_{\text{in}} = 20\,R_s\) and a tertiary at \(a_{\text{out}} = 200\,R_s\). No gas, no stars — pure NR. The Kozai-Lidov mechanism drives the eccentricity of the inner binary, accelerating merger.</p>
+      <p><strong>Physics included:</strong></p>
+      <ul class="check-list">
+        <li>Full NR: 3-body BH metric evolution (BSSN or CCZ4, moving punctures)</li>
+        <li>Full GW waveform extraction at multiple extraction radii</li>
+        <li>Spin-orbit coupling and precession effects</li>
+        <li>Recoil velocity from asymmetric GW emission — final kick computed from the full NR waveform</li>
+      </ul>
+      <p><strong>Computational cost:</strong> \(\sim10^7–10^8\) CPU-hours for a well-resolved, long-duration inspiral. At the very frontier of what has been attempted. A handful of triple-BH NR simulations exist in the literature (Campanelli et al., Lousto &amp; Zlochower, Galaviz et al.) but none with GRMHD.</p>
+      <p><strong>What this tells us vs. ASE:</strong> The GW energy efficiency \(\epsilon_{\text{GW}}\) for the triple merger will be computed rather than assumed. Current NR binary results give \(\epsilon_{\text{GW}} = 0.04–0.10\) depending on mass ratio and spin. For a triple system with hierarchical merger (inner binary merges first, then the remnant merges with the tertiary), the total efficiency is approximately the sum of two binary merger efficiencies — but the second merger starts with a spun-up remnant, potentially increasing \(\epsilon_{\text{GW}}\) for the second event. The total could reach \(0.05 + 0.08 = 0.13\), modestly exceeding the ASE \(\epsilon = 0.1\). The recoil velocity from the first merger feeds into the orbital dynamics of the second merger — a purely NR effect with no analytical approximation.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION G ========== -->
+  <section class="section" id="sec-g">
+    <div class="section-label">Section G</div>
+    <h2>Comparison: ASE vs. Full Physics — What Changes?</h2>
+
+    <h3>G.1 — Infall Velocity</h3>
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &v_{\text{imp,ASE}} = 0.1c \quad (\text{Newtonian free-fall from 1 pc}) \\
+      &v_{\text{imp,GR}}(r\sim R_s) = c\sqrt{\frac{R_s}{r}\left(1-\frac{R_s}{r}\right)} \to \text{undefined in coordinate time; finite in proper time} \\
+      &\text{Correction factor at } r=1\,\text{pc}: \quad v_{\text{GR}}/v_{\text{Newt}} \approx 1 - \frac{3}{2}\frac{R_s}{R_0} \approx 1 - 4.8\times10^{-6} \sim 1 \quad (\text{negligible at 1 pc}) \\
+      &\text{Correction factor at } r\sim R_s: \quad \text{inapplicable — no Newtonian analog}
+      \end{aligned}
+      \]
+    </div>
+    <p>Verdict: The ASE velocity at \(R_0=1\,\text{pc}\) is essentially correct. Its application at \(r\sim R_s\) is not correctable with analytical GR — it's a category error.</p>
+
+    <h3>G.2 — Merger Timescale</h3>
+    <div class="math-block">
+      \[
+      \tau_{\text{ASE}} \sim R_s/c \approx 5\times10^3\,\text{s} \qquad \tau_{\text{Peters}} \sim 10^3\,\text{s} \qquad \text{Full NR: unknown for 5-body}
+      \]
+    </div>
+    <p>The PN estimate is within a factor of \(\sim5\) of the ASE. This agreement is partially coincidental — the PN formula overestimates the time for highly circular orbits in the strong-field regime, while the ASE estimate \(R_s/c\) correctly captures the characteristic dynamical timescale. The two errors partially cancel.</p>
+
+    <h3>G.3 — Gravitational Wave Energy</h3>
+    <div class="math-block gw">
+      \[
+      \begin{aligned}
+      &E_{\text{GW,ASE}} = \epsilon_{\text{GW}}\times 0.1 \times M_{\text{total}}c^2 \approx 8.93\times10^{63}\,\text{erg} \\
+      &E_{\text{GW,NR,binary}} \sim 0.04–0.10 \times M_{\text{total}}c^2 \quad \Rightarrow \quad 3.6\times10^{63} – 8.9\times10^{63}\,\text{erg} \\
+      &\text{Correction factor: } 0.4–1.0 \quad \text{(ASE is at the upper end; defensible)}
+      \end{aligned}
+      \]
+    </div>
+    <p>The GW energy is the ASE's most defensible output. The \(\epsilon_{\text{GW}}=0.1\) assumption is calibrated against NR results and sits at the upper end of the binary-merger range. For a 5-body system, it could be higher (second merger of spun-up remnant) or lower (near-zero relative angular momentum in radial infall). Without a 5-body NR simulation, this remains uncertain to within a factor of \(\sim3\).</p>
+
+    <h3>G.4 — EM Burst Power (The Critical Discrepancy)</h3>
+    <div class="math-block danger">
+      \[
+      \begin{aligned}
+      &P_{\text{EM,burst,ASE}} = \frac{\eta_{\text{EM}}M_{*,\text{total}}c^2}{\Delta t_{\text{GRB}}} \approx 1.54\times10^{54}\,\text{erg/s} \\
+      &P_{\text{slim-disk,real}} \approx L_{\text{Edd}}\left(1+\ln\dot{m}\right) \approx 2\times10^{48}\,\text{erg/s} \\
+      &\text{Discrepancy: } \frac{P_{\text{ASE}}}{P_{\text{slim-disk}}} \approx 7.7\times10^5 \quad \text{(ASE OVERESTIMATES by } \sim6 \text{ orders)}
+      \end{aligned}
+      \]
+    </div>
+    <p>This is not a small correction. This is the ASE's most dangerous number. The apparent \(10^{54}\,\text{erg/s}\) is physically unrealizable because photons are trapped at these accretion rates. The actual radiated power is set by the photon diffusion time through the optically thick flow, not by the bulk energy conversion efficiency. The ASE has produced a number that looks dramatic but is thermodynamically prohibited by a factor of \(\sim10^6\).</p>
+    <p>Note: this does not change the total <em>energy</em> budget significantly (\(E_{\text{EM,burst}}\ll E_{\text{GW}}\)), but it demolishes the claim that the EM burst would be \(10^7\times\) brighter than a quasar. The corrected burst luminosity would be \(\sim2\times10^{48}\,\text{erg/s}\), which is \(\sim10\times L_{\text{Edd}}\) — impressive but not cosmologically unique. Hyper-luminous quasars routinely achieve this.</p>
+
+    <h3>G.5 — Post-Merger AGN and Jet Power</h3>
+    <div class="math-block">
+      \[
+      \begin{aligned}
+      &P_{\text{jet,ASE}} \sim 5\times10^{49}\,\text{erg/s} \quad \text{(BZ mechanism, static }\Phi\text{)} \\
+      &P_{\text{jet,GRMHD}} \sim \Phi_{\text{BH}}^2\,\Omega_H^2 / (4\pi) \quad \text{(same formula, but }\Phi_{\text{BH}}\text{ is evolved, not imposed)} \\
+      &\text{In MAD (Magnetically Arrested Disk) state: } P_{\text{jet}} \sim \dot{M}c^2 \times \eta_{\text{MAD}}(a_*), \quad \eta_{\text{MAD}} \sim 1.4\text{ for }a_*=0.99
+      \end{aligned}
+      \]
+    </div>
+    <p>GRMHD simulations of MAD disks (Tchekhovskoy et al. 2011, McKinney et al. 2012) find jet efficiencies \(\eta_{\text{MAD}}\) exceeding unity for maximal spin — more energy comes out in the jet than falls into the disk, extracted from the BH's rotational energy via the BZ mechanism. The ASE estimate of \(P_{\text{jet}}\sim5\times10^{49}\,\text{erg/s}\) may be conservative by a factor of \(3–10\) for maximal spin, and over-estimated by a similar factor if the post-merger BH spin is moderate (\(a_*\sim0.5\)) due to spin cancellation from misaligned progenitor spins.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION H ========== -->
+  <section class="section" id="sec-h">
+    <div class="section-label">Section H</div>
+    <h2>Final Unified Summary</h2>
+
+    <h3>H.1 — Comparative Table</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Observable</th>
+          <th>ASE Result</th>
+          <th>GR Correction</th>
+          <th>Full Physics (GRMHD)</th>
+          <th>Trust Level</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Infall velocity at 1 pc</td>
+          <td class="ase">0.1c</td>
+          <td class="gr">~0.1c (GR corr. &lt;1%)</td>
+          <td class="nr">~0.1c</td>
+          <td class="val">HIGH</td>
+        </tr>
+        <tr>
+          <td>Merger timescale \(\tau_{\text{merge}}\)</td>
+          <td class="ase">\(5\times10^3\) s</td>
+          <td class="gr">\(10^3\) s (Peters, PN)</td>
+          <td class="nr">Unknown (5-body NR)</td>
+          <td class="val">MEDIUM</td>
+        </tr>
+        <tr>
+          <td>GW energy \(E_{\text{GW}}\)</td>
+          <td class="ase">\(8.9\times10^{63}\) erg</td>
+          <td class="gr">\(4–9\times10^{63}\) erg (NR binary range)</td>
+          <td class="nr">Unknown (5-body)</td>
+          <td class="val">MEDIUM (±factor 3)</td>
+        </tr>
+        <tr>
+          <td>Peak GW power</td>
+          <td class="ase">\(1.8\times10^{62}\) erg/s</td>
+          <td class="gr">Quadrupole: \(~10^{59}\) erg/s; NR peak higher</td>
+          <td class="nr">Unknown</td>
+          <td class="val">LOW (±3 OOM)</td>
+        </tr>
+        <tr>
+          <td>EM burst luminosity</td>
+          <td class="ase">\(1.5\times10^{54}\) erg/s</td>
+          <td class="gr">N/A (radiation physics)</td>
+          <td class="nr">\(\sim2\times10^{48}\) erg/s (slim disk)</td>
+          <td class="val">WRONG by 6 OOM</td>
+        </tr>
+        <tr>
+          <td>EM burst energy</td>
+          <td class="ase">\(1.5\times10^{55}\) erg</td>
+          <td class="gr">N/A</td>
+          <td class="nr">\(\sim10^{55}\) erg (total; stretched over ~1 yr)</td>
+          <td class="val">ENERGY OK; TIMING WRONG</td>
+        </tr>
+        <tr>
+          <td>Post-merger AGN jet power</td>
+          <td class="ase">\(5\times10^{49}\) erg/s</td>
+          <td class="gr">BZ formula: consistent</td>
+          <td class="nr">\(10^{49}–5\times10^{50}\) erg/s (MAD, spin-dependent)</td>
+          <td class="val">MEDIUM (factor 10 range)</td>
+        </tr>
+        <tr>
+          <td>AGN integrated energy</td>
+          <td class="ase">\(1.6\times10^{65}\) erg</td>
+          <td class="gr">Consistent at order of magnitude</td>
+          <td class="nr">Consistent (dominant term in budget)</td>
+          <td class="val">MEDIUM-HIGH</td>
+        </tr>
+        <tr>
+          <td>Final BH mass</td>
+          <td class="ase">\(4.9\times10^8 M_\odot\)</td>
+          <td class="gr">\(4.6–4.9\times10^8 M_\odot\) (NR mass-loss range)</td>
+          <td class="nr">Consistent</td>
+          <td class="val">HIGH</td>
+        </tr>
+        <tr>
+          <td>Recoil velocity</td>
+          <td class="ase">100–1000 km/s</td>
+          <td class="gr">Binary NR: up to 5000 km/s (edge cases)</td>
+          <td class="nr">Unknown for 5-body; potentially higher</td>
+          <td class="val">LOW (order of magnitude)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>H.2 — Key Takeaways</h3>
+
+    <div class="callout info">
+      <div class="callout-title">Where the ASE Gets It Right</div>
+      <p>The total energy budget is dominated by the GW channel (\(E_{\text{GW}}\sim10^{64}\,\text{erg}\)) and the post-merger AGN jet (\(E_{\text{AGN}}\sim10^{65}\,\text{erg}\)). Both are estimated reasonably well by the ASE — within factors of a few — because they scale with simple combinations of \(M_{\text{total}}\) and \(c^2\) that are not sensitive to the details of the dynamics. The comparative ratios (GW vs. quasar, AGN vs. quasar) are order-of-magnitude correct and constitute the most scientifically meaningful output of the ASE calculation.</p>
+    </div>
+
+    <div class="callout danger">
+      <div class="callout-title">Where the ASE Fails Most Severely</div>
+      <p>The EM burst luminosity (\(P_{\text{EM,burst,ASE}} \sim 1.5\times10^{54}\,\text{erg/s}\)) is physically unrealizable. Photon trapping in the super-Eddington flow reduces the actual radiated power by approximately six orders of magnitude relative to the naive efficiency estimate. The comparison ratio \(P_{\text{EM,burst}}/L_{\text{quasar}}\sim10^7\) is entirely spurious. Additionally, the "radial simultaneous infall" scenario is not a physically achievable initial condition — it is a thought experiment whose energetics cannot be connected to observational predictions without a full dynamical simulation of the approach sequence.</p>
+    </div>
+
+    <div class="callout alt">
+      <div class="callout-title">The Simulation Gap</div>
+      <p>The full scenario (5 SMBH + 2 ultra-massive stars, simultaneous coalescence) exceeds the capabilities of any existing or near-future numerical infrastructure by approximately \(10–12\) orders of magnitude in computational cost. The most tractable alternatives — binary SMBH + TDE, or triple SMBH merger without gas — sit at the current frontier and would require \(10^6–10^8\) CPU-hours on Tier-0 systems. They would replace the ASE's scalar energy numbers with temporally and spectrally resolved outputs: light curves, GW waveforms, jet morphology, and recoil trajectories. The energy totals would shift by factors of order unity to order 10. The physical picture would shift dramatically.</p>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-title">The Physicality Caveat</div>
+      <p>The original scenario specifies "no prior interactions between the SMBHs." At separations of 1 pc, five \(10^8 M_\odot\) SMBHs exert mutual gravitational accelerations of \(\sim GM/R^2 \sim 10^{-6}\,\text{cm/s}^2\) per pair. Over the free-fall time of \(\sim R_0/v_{\text{imp}}\sim3\times10^{9}\,\text{s}\sim100\,\text{yr}\), each SMBH deflects by \(\sim\frac{1}{2}a t^2\sim10^{12}\,\text{cm}\sim0.03\,R_s\). This is small but not negligible — the five SMBHs are not dynamically independent over the infall. The "no prior interactions" condition is a mathematical idealization that cannot be achieved by any known astrophysical formation channel.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ========== SECTION I ========== -->
+  <section class="section" id="sec-i">
+    <div class="section-label">Section I</div>
+    <h2>ASE Mandatory Footer</h2>
+
+    <div class="ase-footer">
+      <div class="ase-footer-title">⚠ Limitations of Astrophysical Scale Estimator (ASE)</div>
+      <p>The calculations in Section A are performed using the <strong>Astrophysical Scale Estimator (ASE)</strong> — an analytical estimation framework based on order-of-magnitude scaling, fundamental limits (\(L_{\text{Edd}}, R_s, T_{\text{Hawking}}\)), and idealized symmetry assumptions including spherical geometry, simultaneous coalescence, uniform density, aligned spins, and ballistic stellar trajectories.</p>
+      <p><strong>ASE does NOT include:</strong> full solutions to the Einstein Field Equations; numerical simulations of any kind (N-body, NR, GRMHD, radiative transfer, neutrino transport); full hydrodynamics or magnetohydrodynamics; self-consistent radiation physics; microphysical processes including equation of state, pair production, or neutrino cooling; multi-body GR dynamics; magnetic field evolution; or feedback physics of any variety.</p>
+      <p><strong>Critical identified discrepancy:</strong> The EM burst luminosity estimate (\(\sim10^{54}\,\text{erg/s}\)) overestimates the physically realizable value by approximately six orders of magnitude due to photon trapping in the super-Eddington accretion flow. This does not affect the GW energy budget or the post-merger AGN estimates, which are the dominant and more robustly estimated terms.</p>
+      <p><strong>Sections C–G</strong> bridge the gap by introducing analytical GR corrections, describing full-physics simulation requirements, quantifying discrepancies, and proposing three alternative scenarios of decreasing extremity that can be treated with current or near-future computational tools.</p>
+      <div class="integrity-line">
+        <span>Information Integrity: 110%</span>
+        <span>Methodological Transparency: Absolute</span>
+        <span>Apologies Issued: 0</span>
+      </div>
+    </div>
+  </section>
+
+</div><!-- end page-wrap -->
+
+<script>
+// === STARFIELD ===
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let W, H, stars;
+function initStars() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  stars = Array.from({length: 320}, () => ({
+    x: Math.random()*W, y: Math.random()*H,
+    r: Math.random()*1.4+0.2,
+    a: Math.random(),
+    da: (Math.random()-0.5)*0.003
+  }));
+}
+function drawStars() {
+  ctx.clearRect(0, 0, W, H);
+  for (const s of stars) {
+    s.a = Math.max(0.05, Math.min(1, s.a + s.da));
+    if (s.a <= 0.05 || s.a >= 1) s.da *= -1;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(200,215,255,${s.a})`;
+    ctx.fill();
+  }
+  requestAnimationFrame(drawStars);
+}
+initStars();
+drawStars();
+window.addEventListener('resize', initStars);
+</script>
+</body>
+</html>

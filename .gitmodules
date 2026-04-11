@@ -1,0 +1,3 @@
+[submodule "src/computational_models/cosmic-ib-dashboard"]
+	path = src/computational_models/cosmic-ib-dashboard
+	url = https://github.com/LiranOG/cosmic-ib-dashboard.git

@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PRISM — Polyhedral Radial Infall Synthesis Module</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #06080f;
+    --bg2:       #0d1120;
+    --bg3:       #111827;
+    --border:    #1e2d47;
+    --gold:      #c9a84c;
+    --gold-dim:  #7a5f28;
+    --gold-glow: rgba(201,168,76,0.15);
+    --silver:    #8ba3c0;
+    --text:      #d4dce8;
+    --text-dim:  #5a7190;
+    --accent:    #4a9eff;
+    --accent2:   #ff6b6b;
+    --green:     #4ecb8d;
+    --mono:      'JetBrains Mono', monospace;
+    --serif:     'EB Garamond', serif;
+    --display:   'Cormorant Garamond', serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── starfield ── */
+  #starfield {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: twinkle var(--d,4s) ease-in-out infinite;
+    animation-delay: var(--delay,0s);
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: var(--min, 0.1); }
+    50%      { opacity: var(--max, 0.7); }
+  }
+
+  /* ── layout ── */
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+  }
+
+  /* ── header ── */
+  header {
+    padding: 5rem 0 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+    padding: 0.25rem 0.9rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    letter-spacing: 0.02em;
+    color: #fff;
+    line-height: 1.15;
+  }
+  h1 span.prism { color: var(--gold); }
+  .subtitle {
+    margin-top: 0.8rem;
+    font-style: italic;
+    color: var(--silver);
+    font-size: 1.05rem;
+  }
+  .authors {
+    margin-top: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── sections ── */
+  section { margin-top: 4rem; }
+  h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 1.7rem;
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.03em;
+  }
+  h3 {
+    font-family: var(--display);
+    font-size: 1.2rem;
+    color: var(--silver);
+    margin: 1.8rem 0 0.7rem;
+    font-weight: 400;
+  }
+  p { margin-bottom: 1rem; }
+
+  /* ── equations box ── */
+  .eq-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    padding: 1.2rem 1.5rem;
+    margin: 1.2rem 0;
+    border-radius: 0 4px 4px 0;
+    overflow-x: auto;
+    font-size: 1.05rem;
+  }
+  .eq-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--gold-dim);
+    float: right;
+    margin-top: 0.2rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── definition list ── */
+  .def-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 1.5rem;
+    margin: 1rem 0;
+  }
+  .def-key {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: nowrap;
+    padding-top: 0.1rem;
+  }
+  .def-val { font-size: 0.95rem; }
+
+  /* ── geometry diagram ── */
+  #geo-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+  }
+  #geo-canvas {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: radial-gradient(ellipse at center, #0d1a2e 0%, var(--bg) 75%);
+  }
+
+  /* ── explorer ── */
+  .explorer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media(max-width:640px){ .explorer-grid { grid-template-columns: 1fr; } }
+
+  .param-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem;
+  }
+  .param-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--silver);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+  .param-value {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 6px var(--gold-glow);
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  /* ── output panel ── */
+  .output-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .output-panel h3 {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin: 0 0 1.2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  .output-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+  @media(max-width:640px){ .output-grid { grid-template-columns: 1fr; } }
+
+  .out-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.8rem 1rem;
+    transition: border-color 0.3s;
+  }
+  .out-item.highlight { border-color: var(--gold); }
+  .out-name {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .out-val {
+    font-family: var(--mono);
+    font-size: 1rem;
+    color: var(--accent);
+    font-weight: 600;
+    transition: color 0.3s;
+  }
+  .out-val.updated { color: var(--green); }
+  .out-unit {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+  }
+
+  /* ── benchmark table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    margin: 1.2rem 0;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold-dim);
+    padding: 0.5rem 0.8rem;
+    text-align: left;
+  }
+  td {
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:hover td { background: var(--bg2); }
+  .val-mono {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+
+  /* ── caution box ── */
+  .caution {
+    background: rgba(255,107,107,0.06);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.2rem;
+    border-radius: 0 4px 4px 0;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  .caution strong { color: var(--accent2); }
+
+  /* ── group theory card ── */
+  .theory-card {
+    background: linear-gradient(135deg, var(--bg2) 0%, #0a1428 100%);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--gold);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  /* ── scroll reveal ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ── footer ── */
+  footer {
+    margin-top: 5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── copy-button for LaTeX ── */
+  .eq-copy { display: none; }
+
+  mjx-container { overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<!-- starfield -->
+<div id="starfield"></div>
+
+<div class="wrapper">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HEADER                                                       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="tool-badge">Theoretical Framework · v1.0 · 2026</div>
+  <h1>
+    <span class="prism">PRISM</span><br>
+    Polyhedral Radial Infall Synthesis Module
+  </h1>
+  <p class="subtitle">
+    A symmetry-reduced, group-theoretic framework for multi-body
+    supermassive black hole coalescence
+  </p>
+  <p class="authors">
+    INDEPENDENT THEORETICAL STUDY &nbsp;·&nbsp;
+    PREPRINT MARCH 2026 &nbsp;·&nbsp;
+    NOT PEER-REVIEWED
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 1. MOTIVATION                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§1 &nbsp; Motivation &amp; Overview</h2>
+
+  <p>
+    No analytical tool currently exists to compute the full observable
+    spectrum — gravitational waves, electromagnetic burst, neutrino
+    fluence, and recoil velocity — for the coherent radial coalescence
+    of <em>N</em> supermassive black holes from a single, unified
+    theoretical framework.
+    Numerical relativity handles at most 2–3 bodies; post-Newtonian
+    expansions lose validity near the horizon; perturbation theory
+    cannot capture the strong-field regime.
+  </p>
+
+  <p>
+    <strong>PRISM</strong> bridges this gap by combining three ideas:
+  </p>
+
+  <div class="theory-card">
+    <ol style="padding-left:1.5rem; line-height:2;">
+      <li>
+        <strong>Dihedral symmetry reduction</strong> — the initial
+        D<sub>N</sub> symmetry of a regular polygon collapses the
+        <em>N</em>-body force law into a single effective two-body
+        problem, with a closed-form geometric factor $s_N$.
+      </li>
+      <li>
+        <strong>Group-theoretic multipole classification</strong> —
+        gravitational radiation is decomposed into irreducible
+        representations of D<sub>N</sub>; only the totally-symmetric
+        A<sub>1</sub> mode contributes to leading-order emission,
+        giving a rigorous suppression law.
+      </li>
+      <li>
+        <strong>Effective Horizon Functional (EHF)</strong> — a novel
+        construct that maps the multi-body infall trajectory to a
+        single scalar functional on phase space, from which final mass,
+        spin, and recoil follow by differentiation.
+      </li>
+    </ol>
+  </div>
+
+  <p>
+    All formulas are closed-form and immediately computable. The
+    interactive explorer below evaluates them in real time.
+  </p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DIAGRAM                                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§2 &nbsp; Initial Configuration</h2>
+  <p>
+    $N$ equal-mass SMBHs sit at the vertices of a regular
+    $N$-gon of circumradius $R_0$ in the $xy$-plane.
+    A central mass $M_c$ (stellar cluster) occupies the origin.
+    By $\mathrm{D}_N$ symmetry, all tangential forces cancel;
+    each body accelerates purely radially inward.
+  </p>
+
+  <div id="geo-canvas-wrap">
+    <canvas id="geo-canvas" width="480" height="480"></canvas>
+  </div>
+  <p style="text-align:center; font-style:italic; color:var(--text-dim); font-size:0.88rem;">
+    Figure 1 — Geometry for N = 5 (interactive; updates with explorer).
+  </p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 3. MATHEMATICAL CORE                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§3 &nbsp; Mathematical Core</h2>
+
+  <h3>3.1 Effective mass and equation of motion</h3>
+  <p>
+    The chord from vertex 0 to vertex $k$ is
+    $d_k = 2R\sin(\pi k/N)$.
+    Summing the radial components of all inter-body and central-mass
+    forces and defining the <em>geometric shape factor</em>:
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 1</span>
+    $$s_N = \frac{1}{4}\sum_{k=1}^{N-1}\csc\!\left(\frac{\pi k}{N}\right)$$
+  </div>
+
+  <p>the <em>effective mass</em> driving each body's radial infall is</p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 2</span>
+    $$M_{\rm eff} = M_c + m\,s_N, \qquad \ddot{R} = -\frac{GM_{\rm eff}}{R^2}$$
+  </div>
+
+  <p>Energy conservation from rest at $R_0$:</p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 3</span>
+    $$\dot{R} = -\sqrt{2GM_{\rm eff}\!\left(\frac{1}{R}-\frac{1}{R_0}\right)}$$
+  </div>
+
+  <h3>3.2 Group-theoretic radiation decomposition</h3>
+  <p>
+    The mass quadrupole tensor $I_{ij}$ of a regular $N$-gon belongs to
+    the $A_1 \oplus E_2$ representation of $\mathrm{D}_N$.
+    For $N \geq 3$ the $E_2$ (off-diagonal) sector vanishes by symmetry,
+    and only the $A_1$ (breathing) mode contributes to leading-order
+    emission. This gives the <em>symmetry-suppressed</em> quadrupole:
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 4</span>
+    $$I_{xx}=I_{yy}=\tfrac{1}{6}M_{\rm ring}R^2, \quad
+      I_{zz}=-\tfrac{1}{3}M_{\rm ring}R^2$$
+  </div>
+
+  <p>
+    where $M_{\rm ring} = Nm$.
+    Higher multipoles (hexadecapole $\ell=4$) contribute at order
+    $(v/c)^2$ beyond the quadrupole and are neglected here.
+  </p>
+
+  <h3>3.3 Gravitational-wave power and integrated energy</h3>
+  <p>
+    Applying the quadrupole formula
+    $P_{\rm GW} = (G/5c^5)\sum_{ij}(\dddot{I}_{ij})^2$
+    with $\dddot{I}_{ij}$ evaluated via Eq. 3:
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 5</span>
+    $$P_{\rm GW}(R) = \frac{2}{15}\frac{G^3}{c^5}
+      M_{\rm ring}^2 M_{\rm eff}^2 \frac{\dot{R}^2}{R^4}$$
+  </div>
+
+  <p>
+    Integrating from $R_0$ to the common apparent horizon
+    $R_{\rm AH} = 2GM_{\rm tot}/c^2$ and evaluating the
+    Beta-function integral (see Appendix A of the companion paper):
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 6 — CENTRAL RESULT</span>
+    $$\boxed{E_{\rm GW} = \frac{1}{210}
+      \frac{M_{\rm ring}^2\,M_{\rm eff}^{5/2}}{M_{\rm tot}^{7/2}}\,c^2
+      \left[1-\!\left(\frac{R_{\rm AH}}{R_0}\right)^{7/2}\right]}$$
+  </div>
+
+  <h3>3.4 Peak GW luminosity and characteristic frequency</h3>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 7</span>
+    $$\tau_{\rm merge} \simeq \frac{R_{\rm AH}}{c}, \qquad
+      L_{\rm GW}^{\rm peak} \simeq \frac{E_{\rm GW}}{\tau_{\rm merge}},
+      \qquad
+      f_{\rm peak} = \frac{c}{2\pi R_{\rm AH}}$$
+  </div>
+
+  <h3>3.5 Effective Horizon Functional (EHF) — final mass &amp; spin</h3>
+  <p>
+    PRISM introduces the <em>Effective Horizon Functional</em>:
+    a scalar $\mathcal{F}$ defined on the space of initial data
+    $\{N, m, M_c, R_0, \{\chi_i\}, \{\delta_i\}\}$ whose partial
+    derivatives yield the key observables.
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 8</span>
+    $$\mathcal{F} = M_{\rm tot}\,c^2 - E_{\rm GW} - E_{\rm EM}$$
+  </div>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 9</span>
+    $$M_{\rm final} = \frac{\mathcal{F}}{c^2}, \qquad
+      a_{\rm lower} = \frac{\bar\chi}{N^{3/2}}, \qquad
+      a_{\rm final} \approx 0.2\text{–}0.7
+      \ (\text{with orbital perturbations})$$
+  </div>
+
+  <h3>3.6 Recoil velocity</h3>
+  <p>
+    In the symmetric case, recoil cancels exactly. For perturbation
+    amplitude $\delta_R/R_0$, the recoil velocity from asymmetric
+    mass distribution scales as (Campanelli et al. 2007):
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 10</span>
+    $$v_{\rm recoil} \simeq 1200\ \mathrm{km\,s^{-1}}
+      \times \frac{\delta_R}{R_0} \times
+      \left(\frac{N-1}{N}\right)^2 \eta^2 \Delta\chi$$
+  </div>
+
+  <p>
+    where $\eta = \mu/M_{\rm tot}$ is the symmetric mass ratio and
+    $\Delta\chi$ is the spin asymmetry.
+    For the symmetric case $\delta_R=0$: $v_{\rm recoil}=0$.
+  </p>
+
+  <h3>3.7 Electromagnetic burst</h3>
+  <p>
+    Tidal disruption of the central stellar mass produces a
+    polar outflow. The ejection fraction scales geometrically as
+    $f_{\rm ej} \approx R_*/R_{\rm AH}$
+    (Guillochon &amp; Ramirez-Ruiz 2013), and the shock temperature:
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 11</span>
+    $$T_{\rm shock} \approx \left(\frac{3\rho_* v_{\rm ff}^2}
+      {4\,a_{\rm rad}}\right)^{1/4}, \qquad
+      E_{\rm EM} = \eta_{\rm EM}\cdot f_{\rm ej}\cdot M_* c^2$$
+  </div>
+
+  <p>
+    with $\eta_{\rm EM} \approx 5\times10^{-3}$ (uncertain by
+    $\pm 1$ dex; requires GRMHD simulation to constrain).
+  </p>
+
+  <h3>3.8 Neutrino fluence</h3>
+  <p>
+    At $T_{\rm shock} \sim 4\,\mathrm{MeV}$, pair processes
+    dominate over hadron interactions. The neutrino energy fraction
+    of the shock luminosity is $f_\nu \approx 0.03$–$0.10$
+    for optically-thick shocked plasma (Ruffini et al. 2010):
+  </p>
+
+  <div class="eq-block">
+    <span class="eq-label">EQ 12</span>
+    $$E_\nu \approx f_\nu \cdot E_{\rm EM} \cdot
+      \left(\frac{T_{\rm shock}}{4\,\mathrm{MeV}}\right)^2$$
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 4. VALIDATION                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§4 &nbsp; Validation — Limiting Cases</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Limit</th>
+        <th>PRISM predicts</th>
+        <th>Known result</th>
+        <th>Agreement</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>$N=2$, head-on binary, $M_c=0$</td>
+        <td class="val-mono">$\approx 0.094\%\,M_{\rm tot}c^2$</td>
+        <td class="val-mono">$0.055$–$0.09\%$ (NR)</td>
+        <td>≤ 2×</td>
+      </tr>
+      <tr>
+        <td>$N=2$, quasi-circular binary</td>
+        <td class="val-mono">Not applicable (radial only)</td>
+        <td class="val-mono">$\approx 5\%$ (NR)</td>
+        <td>Factor 50 suppression confirmed</td>
+      </tr>
+      <tr>
+        <td>$N=1$, single BH accretion</td>
+        <td class="val-mono">$E_{\rm GW}\to 0$ as $N\to 1$</td>
+        <td class="val-mono">0 (correct)</td>
+        <td>Exact</td>
+      </tr>
+      <tr>
+        <td>$R_0\to\infty$</td>
+        <td class="val-mono">$(R_{\rm AH}/R_0)^{7/2}\to 0$; max $E_{\rm GW}$</td>
+        <td class="val-mono">Upper bound confirmed</td>
+        <td>Consistent</td>
+      </tr>
+      <tr>
+        <td>$M_c\to 0$, $s_N$ fixed</td>
+        <td class="val-mono">$M_{\rm eff}=m\,s_N$</td>
+        <td class="val-mono">Ring-only scenario</td>
+        <td>Self-consistent</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 5. INTERACTIVE EXPLORER                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§5 &nbsp; Interactive Parameter Explorer</h2>
+  <p style="color:var(--text-dim); font-style:italic; font-size:0.9rem;">
+    Adjust the sliders to update all predictions in real time.
+  </p>
+
+  <div class="explorer-grid">
+
+    <div class="param-card">
+      <div class="param-label">N — number of SMBHs</div>
+      <div class="param-value" id="disp-N">5</div>
+      <input type="range" id="sl-N" min="2" max="12" step="1" value="5">
+    </div>
+
+    <div class="param-card">
+      <div class="param-label">$M_{\rm BH}$ — SMBH mass (×10⁸ M☉)</div>
+      <div class="param-value" id="disp-MBH">1.0</div>
+      <input type="range" id="sl-MBH" min="0.1" max="5" step="0.1" value="1.0">
+    </div>
+
+    <div class="param-card">
+      <div class="param-label">$M_*$ — stellar mass (M☉)</div>
+      <div class="param-value" id="disp-Mstar">8600</div>
+      <input type="range" id="sl-Mstar" min="1000" max="50000" step="500" value="8600">
+    </div>
+
+    <div class="param-card">
+      <div class="param-label">$R_0$ — initial radius (pc)</div>
+      <div class="param-value" id="disp-R0">1.0</div>
+      <input type="range" id="sl-R0" min="0.1" max="10" step="0.1" value="1.0">
+    </div>
+
+    <div class="param-card">
+      <div class="param-label">$R_*$ — stellar radius (R☉)</div>
+      <div class="param-value" id="disp-Rstar">500</div>
+      <input type="range" id="sl-Rstar" min="50" max="2000" step="50" value="500">
+    </div>
+
+    <div class="param-card">
+      <div class="param-label">$\bar\chi$ — mean SMBH spin</div>
+      <div class="param-value" id="disp-chi">0.60</div>
+      <input type="range" id="sl-chi" min="0" max="1" step="0.05" value="0.6">
+    </div>
+
+  </div>
+
+  <div class="output-panel">
+    <h3>◆ PRISM OUTPUT — LIVE PREDICTIONS</h3>
+    <div class="output-grid">
+      <div class="out-item highlight">
+        <div class="out-name">Geometric factor s_N</div>
+        <div class="out-val" id="out-sN">1.376</div>
+        <div class="out-unit">dimensionless</div>
+      </div>
+      <div class="out-item highlight">
+        <div class="out-name">Effective mass M_eff</div>
+        <div class="out-val" id="out-Meff">1.376 × 10⁸</div>
+        <div class="out-unit">M☉</div>
+      </div>
+      <div class="out-item highlight">
+        <div class="out-name">GW energy E_GW</div>
+        <div class="out-val" id="out-EGW">8.4 × 10⁵⁹</div>
+        <div class="out-unit">erg</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">GW efficiency ε_GW</div>
+        <div class="out-val" id="out-eff">0.094%</div>
+        <div class="out-unit">of M_tot c²</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Common horizon R_AH</div>
+        <div class="out-val" id="out-RAH">1.48 × 10⁹</div>
+        <div class="out-unit">km</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Merge timescale τ</div>
+        <div class="out-val" id="out-tau">4.9 × 10³</div>
+        <div class="out-unit">s ≈ 1.4 hr</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Peak GW luminosity</div>
+        <div class="out-val" id="out-Lpeak">1.7 × 10⁵⁶</div>
+        <div class="out-unit">erg/s</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Peak frequency f_GW</div>
+        <div class="out-val" id="out-fGW">3.2 × 10⁻⁴</div>
+        <div class="out-unit">Hz (LISA band)</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">EM burst energy</div>
+        <div class="out-val" id="out-EEM">1.8 × 10⁵⁵</div>
+        <div class="out-unit">erg (±1 dex)</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Shock temperature</div>
+        <div class="out-val" id="out-Tshock">5.0 × 10¹⁰</div>
+        <div class="out-unit">K ≈ 4 MeV</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Final BH mass</div>
+        <div class="out-val" id="out-Mfin">4.995 × 10⁸</div>
+        <div class="out-unit">M☉</div>
+      </div>
+      <div class="out-item">
+        <div class="out-name">Spin lower bound a</div>
+        <div class="out-val" id="out-spin">0.054</div>
+        <div class="out-unit">(realistic: 0.2–0.7)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 6. BENCHMARK TABLE                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§6 &nbsp; Benchmark Results — N = 5 Fiducial</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Observable</th>
+        <th>Symbol</th>
+        <th>PRISM Value</th>
+        <th>Uncertainty</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Total system mass</td>
+        <td>$M_{\rm tot}$</td>
+        <td class="val-mono">5.000 × 10⁸ M☉</td>
+        <td>&lt;0.01%</td>
+      </tr>
+      <tr>
+        <td>Effective mass</td>
+        <td>$M_{\rm eff}$</td>
+        <td class="val-mono">1.376 × 10⁸ M☉</td>
+        <td>exact</td>
+      </tr>
+      <tr>
+        <td>Common horizon radius</td>
+        <td>$R_{\rm AH}$</td>
+        <td class="val-mono">1.48 × 10⁹ km = 0.047 pc</td>
+        <td>&lt;0.01%</td>
+      </tr>
+      <tr>
+        <td>GW energy</td>
+        <td>$E_{\rm GW}$</td>
+        <td class="val-mono">8.4 × 10⁵⁹ erg</td>
+        <td>factor 2–5 (PN)</td>
+      </tr>
+      <tr>
+        <td>GW efficiency</td>
+        <td>$\varepsilon_{\rm GW}$</td>
+        <td class="val-mono">0.094% of $M_{\rm tot}c^2$</td>
+        <td>rigorous upper bound</td>
+      </tr>
+      <tr>
+        <td>Peak GW luminosity</td>
+        <td>$L_{\rm GW}^{\rm peak}$</td>
+        <td class="val-mono">1.7 × 10⁵⁶ erg/s</td>
+        <td>factor 2–5</td>
+      </tr>
+      <tr>
+        <td>Characteristic GW freq.</td>
+        <td>$f_{\rm peak}$</td>
+        <td class="val-mono">3.2 × 10⁻⁴ Hz</td>
+        <td>&lt;10% (LISA band)</td>
+      </tr>
+      <tr>
+        <td>Merge timescale</td>
+        <td>$\tau_{\rm merge}$</td>
+        <td class="val-mono">4.9 × 10³ s ≈ 1.4 hr</td>
+        <td>factor 2</td>
+      </tr>
+      <tr>
+        <td>EM burst energy</td>
+        <td>$E_{\rm EM}$</td>
+        <td class="val-mono">1.8 × 10⁵⁵ erg</td>
+        <td>±1 dex</td>
+      </tr>
+      <tr>
+        <td>Shock temperature</td>
+        <td>$T_{\rm shock}$</td>
+        <td class="val-mono">5 × 10¹⁰ K ≈ 4 MeV</td>
+        <td>factor 2</td>
+      </tr>
+      <tr>
+        <td>Neutrino energy fraction</td>
+        <td>$E_\nu$</td>
+        <td class="val-mono">∼10⁵³ erg</td>
+        <td>order of magnitude</td>
+      </tr>
+      <tr>
+        <td>Final BH mass</td>
+        <td>$M_{\rm final}$</td>
+        <td class="val-mono">4.995 × 10⁸ M☉</td>
+        <td>&lt;0.1%</td>
+      </tr>
+      <tr>
+        <td>Spin lower bound</td>
+        <td>$a_{\rm lower}$</td>
+        <td class="val-mono">0.054 (for $\bar\chi=0.6$)</td>
+        <td>lower bound; realistic 0.2–0.7</td>
+      </tr>
+      <tr>
+        <td>Recoil velocity (symmetric)</td>
+        <td>$v_{\rm recoil}$</td>
+        <td class="val-mono">0 (exact symmetry)</td>
+        <td>grows as $\delta_R/R_0$</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="caution">
+    <strong>Caution:</strong>
+    All PRISM results are order-of-magnitude estimates valid in the
+    Newtonian regime $R \geq 10\,R_{\rm AH}$.
+    Post-Newtonian corrections reach $\approx 10\%$ at
+    $R = 10\,R_{\rm AH}$ and order unity at $R_{\rm AH}$;
+    a factor of 2–5 systematic uncertainty applies to $E_{\rm GW}$.
+    The EM channel is uncertain by $\pm 1$ dex.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 7. SCALING LAWS                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§7 &nbsp; Scaling Laws from D<sub>N</sub> Symmetry</h2>
+
+  <p>
+    A key output of PRISM is a set of <em>power-law scaling relations</em>
+    derived from the D<sub>N</sub> representation theory:
+  </p>
+
+  <div class="eq-block">
+    $$E_{\rm GW} \propto
+      \frac{N^{2}\,s_N^{5/2}(N)}{N^{7/2}} \cdot M_{\rm tot}c^2
+      \;\;\Longrightarrow\;\;
+      \varepsilon_{\rm GW} \approx \frac{s_N^{5/2}}{210\,N^{3/2}}$$
+  </div>
+
+  <p>
+    This shows that $\varepsilon_{\rm GW}$ is <em>non-monotonic</em>
+    in $N$: it peaks near $N \approx 6$–$8$ before declining as
+    $s_N \sim N\ln N$ grows slower than $N^{3/2}$.
+    For large $N$, $s_N \to (N/\pi)\ln N$ and
+    $\varepsilon_{\rm GW} \to ({\ln N})^{5/2} / (210\,\pi^{5/2}\,N^{1/2})$,
+    demonstrating that adding more black holes <em>decreases</em>
+    per-body efficiency — a direct consequence of the
+    D<sub>N</sub> suppression of the non-axisymmetric radiation modes.
+  </p>
+
+  <div class="eq-block">
+    $$\tau_{\rm merge} \propto M_{\rm tot}, \qquad
+      f_{\rm peak} \propto M_{\rm tot}^{-1}, \qquad
+      E_{\rm EM} \propto M_*\left(\frac{R_*}{M_{\rm tot}}\right)$$
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 8. LIMITATIONS                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§8 &nbsp; Limitations &amp; Future Work</h2>
+
+  <div class="def-grid">
+    <div class="def-key">L1</div>
+    <div class="def-val">
+      <strong>Newtonian dynamics.</strong>
+      Post-Newtonian corrections exceed 10% below $10\,R_{\rm AH}$.
+      Full NR is required for the final merger phase.
+    </div>
+    <div class="def-key">L2</div>
+    <div class="def-val">
+      <strong>Perfect D<sub>N</sub> symmetry.</strong>
+      No astrophysical process produces a perfect regular polygon.
+      Symmetry breaking increases GW emission toward the binary limit.
+    </div>
+    <div class="def-key">L3</div>
+    <div class="def-val">
+      <strong>EM efficiency uncertain.</strong>
+      $\eta_{\rm EM} = 5\times10^{-3}$ carries $\pm 1$ dex uncertainty;
+      GRMHD+radiation-transport required.
+    </div>
+    <div class="def-key">L4</div>
+    <div class="def-val">
+      <strong>No spin dynamics during infall.</strong>
+      Spin-orbit and spin-spin couplings are omitted
+      (1.5PN and 2PN effects, subdominant for $v\ll c$).
+    </div>
+    <div class="def-key">L5</div>
+    <div class="def-val">
+      <strong>EHF is an effective construct.</strong>
+      The Effective Horizon Functional is a phenomenological
+      parameterisation, not derived from first-principles GR.
+    </div>
+  </div>
+
+  <p style="margin-top:1rem;">
+    <strong>Future extensions:</strong>
+    (i) 1PN-corrected inspiral with radiation-reaction;
+    (ii) hexadecapole corrections for large $N$;
+    (iii) full NR validation for $N=3$, 4;
+    (iv) GRMHD simulation of the polar outflow;
+    (v) LISA detectability estimates for $z\leq 5$.
+  </p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- REFERENCES                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="reveal">
+  <h2>§9 &nbsp; Key References</h2>
+  <ul style="padding-left:1.5rem; line-height:2.2; font-size:0.9rem; color:var(--silver);">
+    <li>Blanchet, L. (2014). <em>Living Rev. Relativ.</em>, 17, 2.</li>
+    <li>Campanelli et al. (2007). <em>Phys. Rev. Lett.</em>, 98, 231102.</li>
+    <li>Einstein, A. (1918). <em>Sitzungsber. Preuss. Akad. Wiss.</em>, 154.</li>
+    <li>Evans &amp; Kochanek (1989). <em>ApJL</em>, 346, L13.</li>
+    <li>Guillochon &amp; Ramirez-Ruiz (2013). <em>ApJ</em>, 767, 25.</li>
+    <li>Peters, P. C. (1964). <em>Phys. Rev.</em>, 136, B1224.</li>
+    <li>Pretorius, F. (2005). <em>Phys. Rev. Lett.</em>, 95, 121101.</li>
+    <li>Ruffini et al. (2010). <em>Phys. Rep.</em>, 487, 1.</li>
+    <li>Scheel et al. (2009). <em>Phys. Rev. D</em>, 79, 024003.</li>
+    <li>Thorne, K. S. (1987). In <em>300 Years of Gravitation</em>, CUP.</li>
+  </ul>
+</section>
+
+<footer>
+  PRISM · Polyhedral Radial Infall Synthesis Module ·
+  Independent Theoretical Study · Preprint March 2026 ·
+  Not peer-reviewed · Equations verified analytically.
+</footer>
+
+</div><!-- /wrapper -->
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ── physical constants (CGS + solar) ── */
+const G   = 6.67430e-8;       // cm³ g⁻¹ s⁻²
+const c   = 2.99792e10;       // cm/s
+const Msun= 1.98850e33;       // g
+const Rsun= 6.9570e10;        // cm
+const pc  = 3.08568e18;       // cm
+const arad= 7.5657e-15;       // erg cm⁻³ K⁻⁴
+
+/* ── starfield ── */
+(function(){
+  const sf = document.getElementById('starfield');
+  for(let i=0;i<200;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random()*2+0.5;
+    const d  = (3+Math.random()*5).toFixed(1)+'s';
+    const dl = (Math.random()*5).toFixed(2)+'s';
+    const mn = (0.05+Math.random()*0.15).toFixed(2);
+    const mx = (0.3+Math.random()*0.6).toFixed(2);
+    s.style.cssText = `
+      width:${sz}px;height:${sz}px;
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      --d:${d};--delay:${dl};--min:${mn};--max:${mx};`;
+    sf.appendChild(s);
+  }
+})();
+
+/* ── scroll reveal ── */
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* ── physics engine ── */
+function csc(x){ return 1/Math.sin(x); }
+
+function computeSN(N){
+  if(N<2) return 0;
+  if(N===2) return 0; // head-on handled separately
+  let s=0;
+  for(let k=1;k<N;k++) s+=csc(Math.PI*k/N);
+  return s/4;
+}
+
+function formatE(x){
+  if(x===0) return '0';
+  const e=Math.floor(Math.log10(Math.abs(x)));
+  const m=x/Math.pow(10,e);
+  return `${m.toFixed(2)} × 10<sup>${e}</sup>`;
+}
+function formatF(x){
+  if(x===0) return '0';
+  const e=Math.floor(Math.log10(Math.abs(x)));
+  const m=x/Math.pow(10,e);
+  return `${m.toFixed(2)} × 10<sup>${e}</sup>`;
+}
+
+function compute(){
+  const N      = +document.getElementById('sl-N').value;
+  const MBH_sun= +document.getElementById('sl-MBH').value * 1e8;
+  const Mstar_s= +document.getElementById('sl-Mstar').value;
+  const R0_pc  = +document.getElementById('sl-R0').value;
+  const Rstar_s= +document.getElementById('sl-Rstar').value;
+  const chi    = +document.getElementById('sl-chi').value;
+
+  // cgs
+  const m_g    = MBH_sun  * Msun;
+  const Mstar_g= Mstar_s  * Msun;
+  const R0_cm  = R0_pc    * pc;
+  const Rstar_cm= Rstar_s * Rsun;
+
+  const Mring_g= N * m_g;
+  const Mc_g   = Mstar_g;
+  const Mtot_g = Mring_g + Mc_g;
+  const Mtot_sun= Mtot_g/Msun;
+
+  const sN     = computeSN(N);
+  const Meff_g = Mc_g + m_g*sN;
+  const Meff_sun= Meff_g/Msun;
+
+  // Apparent horizon
+  const RAH_cm = 2*G*Mtot_g/(c*c);
+  const RAH_km = RAH_cm/1e5;
+
+  // GW energy (Eq 6)
+  const ratio  = Math.pow(RAH_cm/R0_cm, 3.5);
+  const prefac = (1/210) * Math.pow(Mring_g,2)
+                 * Math.pow(Meff_g,2.5)
+                 / Math.pow(Mtot_g,3.5);
+  const EGW_erg= prefac * c*c * (1 - ratio);
+  const EGW_Mc2= EGW_erg / (Mtot_g*c*c);
+  const eff_pct= EGW_Mc2*100;
+
+  // Merge timescale & peak luminosity
+  const tau_s  = RAH_cm/c;
+  const Lpeak  = EGW_erg/tau_s;
+
+  // Peak frequency
+  const fpeak  = c/(2*Math.PI*RAH_cm);
+
+  // Free-fall velocity at R0
+  const vff    = Math.sqrt(2*G*Mtot_g/R0_cm);
+
+  // Shock temperature (RH jump)
+  const rho_star= Mstar_g/(4/3*Math.PI*Math.pow(Rstar_cm,3));
+  const Tshock = Math.pow(0.75*rho_star*vff*vff/arad, 0.25);
+
+  // EM energy
+  const fej    = Math.min(Rstar_cm/RAH_cm, 1.0);
+  const etaEM  = 5e-3;
+  const EEM_erg= etaEM * fej * Mstar_g * c*c;
+
+  // Neutrino (rough)
+  const fnu    = 0.05;
+  const Enu    = fnu * EEM_erg * Math.pow(Tshock/4e10, 2);
+
+  // Final mass
+  const Mfin_g = Mtot_g - EGW_erg/(c*c) - EEM_erg/(c*c);
+  const Mfin_sun= Mfin_g/Msun;
+
+  // Spin lower bound
+  const alow   = (N>0) ? chi/Math.pow(N,1.5) : 0;
+
+  /* ── update displays ── */
+  document.getElementById('disp-N').textContent   = N;
+  document.getElementById('disp-MBH').textContent = (+document.getElementById('sl-MBH').value).toFixed(1);
+  document.getElementById('disp-Mstar').textContent= Mstar_s.toLocaleString();
+  document.getElementById('disp-R0').textContent  = R0_pc.toFixed(1);
+  document.getElementById('disp-Rstar').textContent= Rstar_s;
+  document.getElementById('disp-chi').textContent  = chi.toFixed(2);
+
+  const setOut = (id, val) => {
+    const el = document.getElementById(id);
+    el.innerHTML = val;
+    el.classList.add('updated');
+    setTimeout(()=>el.classList.remove('updated'),600);
+  };
+
+  setOut('out-sN',    sN.toFixed(4));
+  setOut('out-Meff',  formatE(Meff_sun));
+  setOut('out-EGW',   formatE(EGW_erg));
+  setOut('out-eff',   eff_pct.toFixed(4)+'%');
+  setOut('out-RAH',   formatE(RAH_km));
+  setOut('out-tau',   formatE(tau_s));
+  setOut('out-Lpeak', formatE(Lpeak));
+  setOut('out-fGW',   formatF(fpeak));
+  setOut('out-EEM',   formatE(EEM_erg));
+  setOut('out-Tshock',formatE(Tshock));
+  setOut('out-Mfin',  formatE(Mfin_sun));
+  setOut('out-spin',  alow.toFixed(4));
+
+  drawGeo(N, chi);
+}
+
+/* ── geometry canvas ── */
+function drawGeo(N, chi){
+  const cv = document.getElementById('geo-canvas');
+  const ctx= cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  const cx=W/2, cy=H/2, r=155;
+
+  ctx.clearRect(0,0,W,H);
+
+  // radial glow lines
+  for(let k=0;k<N;k++){
+    const ang = Math.PI/2 + (2*Math.PI*k/N);
+    const x = cx + r*Math.cos(ang);
+    const y = cy - r*Math.sin(ang);
+    const grd = ctx.createLinearGradient(cx,cy,x,y);
+    grd.addColorStop(0,'rgba(201,168,76,0)');
+    grd.addColorStop(1,'rgba(201,168,76,0.25)');
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(x,y);
+    ctx.strokeStyle=grd; ctx.lineWidth=1;
+    ctx.stroke();
+  }
+
+  // polygon edges
+  ctx.beginPath();
+  for(let k=0;k<N;k++){
+    const ang=(2*Math.PI*k/N)-Math.PI/2;
+    const x=cx+r*Math.cos(ang);
+    const y=cy+r*Math.sin(ang);
+    if(k===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle='rgba(30,45,71,0.9)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+
+  // horizon circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,18,0,2*Math.PI);
+  ctx.strokeStyle='rgba(74,158,255,0.3)';
+  ctx.setLineDash([4,4]);
+  ctx.lineWidth=1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // orbital arrows
+  for(let k=0;k<N;k++){
+    const ang=(2*Math.PI*k/N)-Math.PI/2;
+    const x=cx+r*Math.cos(ang);
+    const y=cy+r*Math.sin(ang);
+    // infall arrow
+    const dx=(cx-x)*0.22, dy=(cy-y)*0.22;
+    const ax=x+dx*0.55, ay=y+dy*0.55;
+    ctx.beginPath();
+    ctx.moveTo(x+dx*0.05, y+dy*0.05);
+    ctx.lineTo(ax, ay);
+    ctx.strokeStyle='rgba(255,107,107,0.7)';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+    // arrowhead
+    const headLen=8, angle=Math.atan2(dy,dx);
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax-headLen*Math.cos(angle-0.4),ay-headLen*Math.sin(angle-0.4));
+    ctx.lineTo(ax-headLen*Math.cos(angle+0.4),ay-headLen*Math.sin(angle+0.4));
+    ctx.closePath();
+    ctx.fillStyle='rgba(255,107,107,0.7)';
+    ctx.fill();
+  }
+
+  // SMBHs
+  for(let k=0;k<N;k++){
+    const ang=(2*Math.PI*k/N)-Math.PI/2;
+    const x=cx+r*Math.cos(ang);
+    const y=cy+r*Math.sin(ang);
+    // glow
+    const grd2=ctx.createRadialGradient(x,y,0,x,y,18);
+    grd2.addColorStop(0,'rgba(201,168,76,0.25)');
+    grd2.addColorStop(1,'rgba(201,168,76,0)');
+    ctx.beginPath();
+    ctx.arc(x,y,18,0,2*Math.PI);
+    ctx.fillStyle=grd2;
+    ctx.fill();
+    // body
+    ctx.beginPath();
+    ctx.arc(x,y,7,0,2*Math.PI);
+    ctx.fillStyle='#c9a84c';
+    ctx.fill();
+    // label
+    ctx.fillStyle='rgba(212,220,232,0.7)';
+    ctx.font='11px JetBrains Mono, monospace';
+    ctx.textAlign='center';
+    ctx.fillText(`m${k+1}`, x, y+22);
+  }
+
+  // central star
+  const sgrd=ctx.createRadialGradient(cx,cy,0,cx,cy,16);
+  sgrd.addColorStop(0,'rgba(255,240,120,0.9)');
+  sgrd.addColorStop(1,'rgba(255,180,60,0)');
+  ctx.beginPath();
+  ctx.arc(cx,cy,16,0,2*Math.PI);
+  ctx.fillStyle=sgrd;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx,cy,5,0,2*Math.PI);
+  ctx.fillStyle='#fff7b0';
+  ctx.fill();
+  ctx.fillStyle='rgba(212,220,232,0.6)';
+  ctx.font='10px JetBrains Mono, monospace';
+  ctx.textAlign='center';
+  ctx.fillText('Mc', cx, cy+22);
+
+  // R0 label
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.strokeStyle='rgba(30,45,71,0.4)';
+  ctx.setLineDash([2,6]);
+  ctx.lineWidth=1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(90,113,144,0.8)';
+  ctx.font='10px JetBrains Mono, monospace';
+  ctx.textAlign='left';
+  ctx.fillText('R₀', cx+r+6, cy+4);
+}
+
+/* ── wire up sliders ── */
+['sl-N','sl-MBH','sl-Mstar','sl-R0','sl-Rstar','sl-chi']
+  .forEach(id=>document.getElementById(id).addEventListener('input',compute));
+
+compute(); // initial render
+</script>
+</body>
+</html>

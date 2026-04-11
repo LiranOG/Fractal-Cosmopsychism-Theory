@@ -1,0 +1,116 @@
+================================================================================
+  FRACTAL COSMOPSYCHISM THEORY — DUAL LICENSE NOTICE
+  Copyright (c) 2026 Liran O.G. All rights reserved.
+================================================================================
+
+This repository contains two distinct categories of material, each governed by
+a separate license. By accessing, cloning, forking, or using any portion of
+this repository, you agree to comply with both licenses as applicable.
+
+READ THIS NOTICE CAREFULLY BEFORE USE.
+
+────────────────────────────────────────────────────────────────────────────────
+PART I — SOFTWARE (MIT LICENSE)
+Applies to all original source code authored by Liran O.G. in this repository.
+────────────────────────────────────────────────────────────────────────────────
+
+Covered material (non-exhaustive):
+  • src/computational_models/jsx/       — JSX/React ODE simulators & dashboards
+  • src/computational_models/python/    — Python EEG/FOOOF analysis pipelines
+  • src/computational_models/html/      — HTML roadmap and matrix tools
+  • scripts/build_fct_repo.py             — Repository build utility
+  • scripts/copy_philosophical_origins.py — Document migration utility
+  • scripts/init_repo.sh                  — Repository initialisation script
+  • All *.py, *.js, *.jsx, *.ts, *.tsx, *.sh, *.html, *.css files authored
+    directly by Liran O.G. in this repository (excluding the
+    cosmic-ib-dashboard Git submodule — see Part III).
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+────────────────────────────────────────────────────────────────────────────────
+PART II — ACADEMIC & THEORETICAL WORKS (CC BY-NC-ND 4.0)
+Applies to all written theoretical, mathematical, philosophical, and
+empirical-design content authored by Liran O.G. in this repository.
+────────────────────────────────────────────────────────────────────────────────
+
+Covered material (non-exhaustive):
+  • docs/                               — All whitepapers, overviews, glossaries,
+                                          epistemological notes, and philosophy docs
+  • src/theory_and_math/               — All SYN formulas (SYN-01 through SYN-13),
+                                          axiom documents, and upgrade protocols
+  • src/empirical_design/              — All clinical trial protocols, paper
+                                          protocols, and empirical design documents
+  • src/computational_models/integrations/ — Integration bridge documents
+  • CHANGELOG.md, SETUP.md, CONTRIBUTING.md, README.md (textual content)
+  • All *.md and *.pdf files authored directly by Liran O.G.
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-
+NoDerivatives 4.0 International License (CC BY-NC-ND 4.0).
+
+You are free to:
+  SHARE — copy and redistribute the material in any medium or format.
+
+Under the following terms:
+  ATTRIBUTION   — You must give appropriate credit to "Liran O.G., Fractal
+                  Cosmopsychism Theory (2026),
+                  https://github.com/LiranOG/Fractal-Cosmopsychism-Theory",
+                  provide a link to the license, and indicate if changes were
+                  made. You may do so in any reasonable manner, but not in any
+                  way that suggests the licensor endorses you or your use.
+
+  NONCOMMERCIAL — You may not use the material for commercial purposes.
+
+  NO DERIVATIVES — If you remix, transform, or build upon the material, you
+                  may not distribute the modified material. You may create
+                  derivative works for personal or internal research use, but
+                  you may not publish or publicly distribute them without
+                  prior written permission from Liran O.G.
+
+  NO ADDITIONAL RESTRICTIONS — You may not apply legal terms or technological
+                  measures that legally restrict others from doing anything the
+                  license permits.
+
+Full license text: https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode
+
+For permissions beyond the scope of this license (e.g., commercial licensing,
+derivative publications, adaptation in academic journals), contact the author.
+
+────────────────────────────────────────────────────────────────────────────────
+PART III — THIRD-PARTY SUBMODULES (SEPARATE LICENSES)
+These components are NOT covered by Parts I or II above and retain their own
+independent licenses. See LEGAL.md for the full legal boundary analysis.
+────────────────────────────────────────────────────────────────────────────────
+
+  Submodule: cosmic-ib-dashboard (https://github.com/LiranOG/cosmic-ib-dashboard)
+  -------------------------------------------------------------------------------
+  Repository : https://github.com/LiranOG/cosmic-ib-dashboard
+  License    : MIT License (verify against submodule's own LICENSE file)
+  Full text  : src/computational_models/SUBMODEL_LICENSES/LICENSE_cosmic-ib-dashboard
+
+  Submodule: SDSS_Data (https://github.com/LiranOG/SDSS_Data)
+  -------------------------------------------------------------------------------
+  Repository : https://github.com/LiranOG/SDSS_Data
+  License    : MIT License (verify against submodule's own LICENSE file)
+  Full text  : src/computational_models/SUBMODEL_LICENSES/LICENSE_SDSS_Data
+
+================================================================================
+  END OF LICENSE NOTICE
+================================================================================
