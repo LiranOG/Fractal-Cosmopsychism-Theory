@@ -26,6 +26,15 @@
 
 ---
 
+> [!IMPORTANT]
+> **Disciplinary Classification:**  
+> This work is formal theoretical philosophy of mind and speculative cosmology.
+> It is not empirical science, and I am not a neuroscientist or cosmologist.
+> I am an independent researcher sharing an analytical framework for criticism
+> and collaborative refinement.
+
+---
+
 ## Table of Contents
 
 1. [Abstract](#abstract)
