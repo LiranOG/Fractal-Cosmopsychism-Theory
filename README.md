@@ -359,7 +359,7 @@ If you use the FCT framework in academic work, please cite:
 @misc{fct2026,
   title   = {Fractal Cosmopsychism Theory: A Formal Mathematical Framework
              for Consciousness Across Scales},
-  author  = {Liran O.G.},
+  author = {Schwartz, Liran M.},
   year    = {2026},
   url     = {https://github.com/LiranOG/Fractal-Cosmopsychism-Theory},
 }
