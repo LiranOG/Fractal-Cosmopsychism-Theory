@@ -43,7 +43,7 @@
 10. [Citation](#citation)
 11. [License](#license)
     - [License Matrix](#-license-matrix)
-    - [Attribution Requirement](#-attribution-requirement-cc-by-nc-nd-40)
+    - [Attribution Requirement](#attribution-requirement-cc-by-40)
 
 > 📖 **Full installation guide (all platforms):** → **[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)**
 
@@ -347,7 +347,6 @@ If you use the FCT framework in academic work, please cite:
   author  = {Liran O.G.},
   year    = {2026},
   url     = {https://github.com/LiranOG/Fractal-Cosmopsychism-Theory},
-  note    = {Repository version 1.0. Pre-registration pending.}
 }
 ```
 
