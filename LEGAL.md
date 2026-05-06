@@ -1,26 +1,19 @@
-# LEGAL.md — Intellectual Property & Submodule Boundary Notice
+# LEGAL.md — Intellectual Property & Boundary Notice
 
-**Project:** Fractal Cosmopsychism Theory (FCT)  
-**Author / Copyright Holder:** Liran O.G.  
-**Effective Date:** 2026-04-01  
-**Version:** 1.0  
-
----
+**Project:** Fractal Cosmopsychism Theory (FCT)
+**Author / Copyright Holder:** Liran O.G.
+**Effective Date:** 2026-05-01
+**Version:** 2.0
 
 ## 1. Purpose of This Document
 
-This document serves as the formal legal notice and boundary specification for
-the Fractal Cosmopsychism Theory repository. It supplements the `LICENSE` file
-with a detailed analysis of:
+This document supplements the `LICENSE` file with a detailed boundary
+specification for the Fractal Cosmopsychism Theory repository. It clarifies:
 
-1. The dual-licensing structure (MIT + CC BY-NC-ND 4.0)
+1. The dual-licensing structure (MIT + CC BY 4.0)
 2. The scope of copyright protection for theoretical works
 3. Contributor IP assignment terms
-
-This document is intended to be enforceable to the maximum extent permitted by
-applicable copyright law.
-
----
+4. External engine coupling architecture
 
 ## 2. Copyright Statement
 
@@ -43,16 +36,20 @@ and Israel.
 
 Mathematical notation as expressed in this repository (variable definitions,
 ODE system formulations, formula derivations) constitutes a copyrightable
-literary/scientific work. The underlying *ideas* themselves are not copyrightable;
-the specific expression, selection, and arrangement of those ideas is.
-
----
+literary/scientific work. The underlying *ideas* themselves are not
+copyrightable; the specific expression, selection, and arrangement of those
+ideas is.
 
 ## 3. External Engine Coupling Architecture
 
-All external computational engines referenced by this repository are interacted with exclusively through arm's-length interface patterns: reading output files (HDF5, CSV, VTK) via standard I/O libraries, subprocess invocation passing parameters as command-line arguments, or network sockets where the engine acts as a compute service. No FCT source file statically links to, dynamically links to, or source-includes any external engine code. This architecture is maintained to preserve the integrity of the repository's MIT license and to avoid any copyleft propagation.
-
----
+All external computational engines referenced by this repository are interacted
+with exclusively through arm's-length interface patterns: reading output files
+(HDF5, CSV, VTK) via standard I/O libraries, subprocess invocation passing
+parameters as command-line arguments, or network sockets where the engine
+acts as a compute service. No FCT source file statically links to, dynamically
+links to, or source-includes any external engine code. This architecture is
+maintained to preserve the integrity of the repository's MIT license and to
+avoid any copyleft propagation.
 
 ## 4. Copyright Protection of Mathematical & Theoretical Works
 
@@ -65,62 +62,59 @@ equations in a scientific document is copyrightable as a literary work.
 
 The FCT theoretical corpus — the SYN formula documents, the Master Equation
 derivation, the axiom definitions, the tier classification system, and the
-empirical protocol specifications — constitutes original literary and scientific
-expression. Reproducing these documents verbatim, adapting them without
-attribution, or using them as the structural basis of a competing theory
-framework without permission constitutes copyright infringement.
+empirical protocol specifications — constitutes original literary and
+scientific expression. Reproducing these documents verbatim, adapting them
+without attribution, or using them as the structural basis of a competing
+theory framework without permission constitutes copyright infringement.
 
-### 4.2 Why CC BY-NC-ND 4.0 (Not CC BY-SA 4.0)
+### 4.2 Why CC BY 4.0 (Open Academic License)
 
-The theoretical documents are licensed under **CC BY-NC-ND 4.0** rather than
-CC BY-SA 4.0 for the following strategically important reasons:
+The theoretical documents are licensed under **CC BY 4.0** — a standard open
+academic license that permits broad reuse, including commercial use and
+derivative works, provided proper attribution is given.
 
-| Criterion | CC BY-NC-ND 4.0 (Chosen) | CC BY-SA 4.0 (Alternative) |
-|---|---|---|
-| **Commercial use** | Prohibited | Permitted |
-| **Derivatives** | Prohibited without permission | Permitted if same license applied |
-| **Viral effect** | None — restrictive, not propagating | SA clause propagates to derivatives |
-| **Theory protection** | Prevents someone publishing a "fork" of FCT theory | Could allow competing frameworks to absorb FCT claims legally |
-| **Academic citation** | Permitted (non-commercial, non-derived) | Permitted |
-| **Best for pre-publication theory** | ✅ Yes — maintains exclusivity | ❌ No — dilutes authorial control |
+**Key reasoning:**
 
-**Key reasoning for ND (No Derivatives):** The FCT framework is pre-publication.
-The mathematical formulas, epistemological tier system, and UIBIC conjecture are
-the basis of planned journal submissions. If derivatives were permitted, a third
-party could publish a modified version of the theory and establish prior art
-or attribution competing with the original author. ND prevents this.
+- **Attribution required:** The author retains the right to be credited as
+  the originator of the framework, preventing misattribution or plagiarism.
+- **Derivatives permitted:** The scientific method depends on the ability to
+  critique, expand, and build upon published ideas. Allowing derivatives
+  invites collaborative refinement and peer review.
+- **Commercial use permitted:** Open licenses prevent the chilling effect
+  that non-commercial restrictions impose on academic-industry collaboration
+  and institutional research.
+- **No copyleft propagation:** CC BY 4.0 does not impose share-alike
+  requirements, so the framework can be incorporated into broader research
+  without licensing conflicts.
 
-**Key reasoning for NC (Non-Commercial):** The clinical trial protocols and
-empirical designs represent significant intellectual investment. NC prevents
-commercial entities from directly monetizing the FCT framework without a
-separate commercial license agreement with the author.
+This license choice reflects a commitment to open science: the ideas are
+public; the credit is protected.
 
 ### 4.3 What Academic Users MAY Do
 
 - Cite, quote (fair use / fair dealing), and reference FCT documents in their
   own academic work, provided attribution is given.
-- Download and redistribute unmodified copies of this repository for research
-  and educational purposes.
+- Download, redistribute, and adapt copies of this repository for research
+  and educational purposes, including commercial research.
+- Publish modified or extended versions of FCT documents, provided the
+  original author is properly attributed and changes are clearly indicated.
 - Implement the SYN formulas in their own independent code (the *idea* is not
-  copyrightable; a clean-room implementation is permitted).
+  copyrightable; a clean-room implementation is always permitted).
 - Critique, review, or peer-review the theory.
 
 ### 4.4 What Users MAY NOT Do
 
-- Publish modified versions of FCT documents without written permission.
-- Use FCT theoretical materials in commercial products or services.
-- Remove or alter copyright notices from any FCT document.
-- Use the FCT name, logo, or branding in a way that implies endorsement.
-- Incorporate FCT protocol documents into commercial grant applications or
-  clinical trial registrations without a commercial license.
+- Remove or alter copyright notices or attribution from any FCT document.
+- Use the FCT name, logo, or branding in a way that implies endorsement by
+  the original author without permission.
+- Apply legal terms or technological measures that restrict others from
+  exercising rights granted by the CC BY 4.0 license.
 
----
-
-## 5. NOTICE: Third-Party Dependencies Within FCT Source Code
+## 5. Third-Party Dependencies Within FCT Source Code
 
 The FCT original source code (MIT-licensed) uses the following third-party
-open-source libraries. Their licenses are compatible with MIT and do not affect
-the dual-licensing structure:
+open-source libraries. Their licenses are compatible with MIT and do not
+affect the dual-licensing structure:
 
 | Library | Version | License | Used In |
 |---|---|---|---|
@@ -136,29 +130,24 @@ the dual-licensing structure:
 All listed licenses are permissive and do not impose copyleft or commercial
 restrictions on the FCT MIT-licensed code.
 
----
-
 ## 6. No Warranty
 
-THIS REPOSITORY IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED. THE THEORETICAL FRAMEWORKS, FORMULAS, AND EMPIRICAL PROTOCOLS
+THIS REPOSITORY IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED. THE THEORETICAL FRAMEWORKS, FORMULAS, AND EMPIRICAL PROTOCOLS
 CONTAINED HEREIN ARE PRE-PUBLICATION RESEARCH MATERIALS. THEY HAVE NOT BEEN
 PEER-REVIEWED OR VALIDATED IN PROSPECTIVE CLINICAL TRIALS. NOTHING IN THIS
 REPOSITORY CONSTITUTES MEDICAL ADVICE, CLINICAL GUIDANCE, OR REGULATORY
 COMPLIANCE DOCUMENTATION.
 
----
+## 7. Contact & Permissions
 
-## 7. Contact & Commercial Licensing
+For any permissions beyond the scope of the CC BY 4.0 license, or for
+institutional licensing inquiries, contact:
 
-For permissions beyond the scope of the CC BY-NC-ND 4.0 license (including
-commercial use, derivative works, or institutional licensing), contact:
+**Liran O.G.**
+GitHub: https://github.com/LiranOG
+Repository: https://github.com/LiranOG/Fractal-Cosmopsychism-Theory
 
-**Liran O.G.**  
-GitHub: https://github.com/LiranOG  
-Repository: https://github.com/LiranOG/Fractal-Cosmopsychism-Theory  
-
----
-
-*This document was last updated: 2026-04-01. It supersedes any prior informal
-license statements in README.md or other repository files.*
+*This document was last updated: 2026-05-01. It supersedes any prior informal
+license statements and aligns with the CC BY 4.0 license adopted in
+repository version 2.0.*
