@@ -355,25 +355,27 @@ If you use the FCT framework in academic work, please cite:
 
 ## License
 
-This repository operates under a **Dual-License Architecture** that precisely matches the nature of each asset it contains. Read carefully before using or adapting any material.
+This repository operates under a **dual-license Architecture** that precisely
+matches the nature of each asset it contains. Read carefully before using or
+adapting any material.
 
-### ⚖️ License Matrix
+### License Matrix
 
 | Asset Type | Examples | License | You CAN | You CANNOT |
 |---|---|---|---|---|
-| **Source Code** | `.py`, `.jsx`, `.js`, `.sh`, `.html` files authored by Liran O.G. | [![MIT](https://img.shields.io/badge/MIT-0277BD?style=flat-square)](LICENSE) | Use, copy, modify, distribute, sublicense, sell | — |
-| **Academic & Theoretical Works** | SYN formulas, axioms, protocols, whitepapers, glossary, philosophical docs (`.md`, `.pdf`) | [![CC BY-NC-ND 4.0](https://img.shields.io/badge/CC%20BY--NC--ND%204.0-EF5350?style=flat-square)](https://creativecommons.org/licenses/by-nc-nd/4.0/) | Share unmodified copies with attribution, cite in academic work | Use commercially, publish derivatives, remove attribution |
+| **Source Code** | `.py`, `.jsx`, `.js`, `.sh`, `.html` files authored by Liran O.G. | [MIT](https://opensource.org/licenses/MIT) | Use, copy, modify, distribute, sublicense, sell | — |
+| **Academic & Theoretical Works** | SYN formulas, axioms, protocols, whitepapers, glossary, philosophical docs (`.md`, `.pdf`) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Share and adapt for any purpose (even commercially), as long as you give appropriate credit | Remove attribution; apply additional restrictions |
 
-### 📋 Attribution Requirement (CC BY-NC-ND 4.0)
+### Attribution Requirement (CC BY 4.0)
 
 When citing or sharing FCT theoretical materials, use:
 
-```
-Liran O.G., "Fractal Cosmopsychism Theory: A Formal Mathematical Framework
-for Consciousness Across Scales" (2026). https://github.com/LiranOG/Fractal-Cosmopsychism-Theory
-```
+> Liran O.G., "Fractal Cosmopsychism Theory: A Formal Mathematical Framework
+> for Consciousness Across Scales" (2026).
+> https://github.com/LiranOG/Fractal-Cosmopsychism-Theory
 
-→ Full license terms, copyright statement, and submodule boundary rules: **[LICENSE](LICENSE)** · **[LEGAL.md](LEGAL.md)**
+→ Full license terms, copyright statement, and third‑party boundary rules:
+**[LICENSE](LICENSE)** · **[LEGAL.md](LEGAL.md)**
 
 ---
 
