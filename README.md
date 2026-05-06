@@ -16,8 +16,8 @@
     <img src="https://img.shields.io/badge/Code%20License-MIT-0277BD?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License — Source Code"/>
   </a>
   <!-- Academic Works License -->
-  <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">
-    <img src="https://img.shields.io/badge/Docs%20License-CC%20BY--NC--ND%204.0-EF5350?style=for-the-badge&logo=creativecommons&logoColor=white" alt="CC BY-NC-ND 4.0 — Academic Works"/>
+  <a href="https://creativecommons.org/licenses/by/4.0/">
+    <img src="https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-EF5350?style=for-the-badge&logo=creativecommons&logoColor=white" alt="CC BY 4.0 - Academic Works"/>
   </a>
   <!-- Submodule Warning -->
   <a href="LEGAL.md">
@@ -31,7 +31,13 @@
 > This work is formal theoretical philosophy of mind and speculative cosmology.
 > It is not empirical science, and I am not a neuroscientist or cosmologist.
 > I am an independent researcher sharing an analytical framework for criticism
-> and collaborative refinement.
+> and collaborative refinement.  
+>
+> This project occupies a separate intellectual space from my computational
+> astrophysics work (GRANITE, VORTEX, SDSS_Data). The projects share only a
+> methodological interest in Information Bottleneck dynamics; they do not
+> constitute a single unified claim about the universe.
+> 
 
 ---
 
