@@ -1,7 +1,6 @@
 # CHANGELOG — FCT Repository Build History
 > **Path:** `CHANGELOG.md`
 > **Scope:** Complete file inventory, build history, and exclusion declarations
-> **Status:** ✅ Final repository manifest
 
 ---
 
