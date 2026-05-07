@@ -163,4 +163,4 @@
 
 ---
 
-*CHANGELOG version: 1.0.0 | Last updated: 2026-03-29*
+*CHANGELOG version: 1.0.0 | Last updated: 2026-05-08*
